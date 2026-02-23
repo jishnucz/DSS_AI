@@ -1,0 +1,5 @@
+,optimal_temp_min,optimal_temp_max,heat_stress,cold_stress,water_requirement_mm_day,optimal_rh,ndvi_healthy
+Rice,22,32,35,15,8,"(70, 90)",0.6
+Coconut,20,34,38,10,5,"(60, 90)",0.5
+Banana,20,35,38,12,6,"(75, 85)",0.55
+Vegetables,18,30,35,10,4,"(50, 80)",0.45

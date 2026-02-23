@@ -1,0 +1,480 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   AGRIFLYER THEME - Clean, Modern Agriculture Design
+   Inspired by AgriFlyer Agriculture Drone Landing Page
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  /* 🌿 Primary Green Palette */
+  --agri-primary: #22c55e;
+  --agri-primary-dark: #16a34a;
+  --agri-primary-darker: #15803d;
+  --agri-primary-light: #4ade80;
+  --agri-primary-lighter: #86efac;
+  --agri-primary-glow: rgba(34, 197, 94, 0.15);
+  
+  /* 🌙 Dark Theme Colors */
+  --agri-bg-deep: #0a1628;
+  --agri-bg: #0f1f33;
+  --agri-bg-card: #152238;
+  --agri-bg-elevated: #1a2d47;
+  --agri-surface: rgba(255, 255, 255, 0.03);
+  
+  /* 📝 Text Colors */
+  --agri-text-primary: #ffffff;
+  --agri-text-secondary: rgba(255, 255, 255, 0.7);
+  --agri-text-muted: rgba(255, 255, 255, 0.5);
+  --agri-text-hint: rgba(255, 255, 255, 0.35);
+  
+  /* 🎨 Accent Colors */
+  --agri-accent-blue: #3b82f6;
+  --agri-accent-cyan: #06b6d4;
+  --agri-accent-yellow: #eab308;
+  --agri-accent-orange: #f97316;
+  --agri-accent-red: #ef4444;
+  --agri-accent-purple: #a855f7;
+  
+  /* 📐 Borders */
+  --agri-border: rgba(255, 255, 255, 0.08);
+  --agri-border-light: rgba(255, 255, 255, 0.12);
+  --agri-border-green: rgba(34, 197, 94, 0.3);
+  
+  /* 🔤 Typography */
+  --font-display: 'Poppins', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  
+  /* 📏 Spacing & Sizing */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+  
+  /* 🌑 Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.15);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.25);
+  --shadow-xl: 0 16px 60px rgba(0, 0, 0, 0.3);
+  --shadow-green: 0 8px 30px rgba(34, 197, 94, 0.25);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BASE STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  min-height: 100vh;
+  font-family: var(--font-body);
+  background: var(--agri-bg-deep);
+  color: var(--agri-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 20px var(--agri-primary-glow); }
+  50% { box-shadow: 0 0 40px var(--agri-primary-glow); }
+}
+
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TYPOGRAPHY
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--agri-text-primary);
+}
+
+h1 { font-size: 2.5rem; font-weight: 700; }
+h2 { font-size: 2rem; }
+h3 { font-size: 1.5rem; }
+h4 { font-size: 1.25rem; }
+h5 { font-size: 1rem; }
+h6 { font-size: 0.875rem; }
+
+p {
+  color: var(--agri-text-secondary);
+  line-height: 1.6;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CARD STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.agri-card {
+  background: var(--agri-bg-card);
+  border: 1px solid var(--agri-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  transition: all 0.3s ease;
+}
+
+.agri-card:hover {
+  border-color: var(--agri-border-light);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.agri-card-glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--agri-border);
+  border-radius: var(--radius-lg);
+}
+
+.agri-card-highlight {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.02) 100%);
+  border: 1px solid var(--agri-border-green);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BUTTON STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.agri-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-decoration: none;
+}
+
+.agri-btn-primary {
+  background: linear-gradient(135deg, var(--agri-primary) 0%, var(--agri-primary-dark) 100%);
+  color: white;
+  box-shadow: var(--shadow-green);
+}
+
+.agri-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(34, 197, 94, 0.35);
+}
+
+.agri-btn-secondary {
+  background: var(--agri-surface);
+  border: 1px solid var(--agri-border);
+  color: var(--agri-text-primary);
+}
+
+.agri-btn-secondary:hover {
+  background: var(--agri-bg-elevated);
+  border-color: var(--agri-border-light);
+}
+
+.agri-btn-ghost {
+  background: transparent;
+  color: var(--agri-primary-light);
+  padding: 8px 16px;
+}
+
+.agri-btn-ghost:hover {
+  background: var(--agri-primary-glow);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INPUT STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.agri-input {
+  width: 100%;
+  padding: 14px 18px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--agri-text-primary);
+  background: var(--agri-bg-card);
+  border: 1px solid var(--agri-border);
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: all 0.25s ease;
+}
+
+.agri-input::placeholder {
+  color: var(--agri-text-hint);
+}
+
+.agri-input:hover {
+  border-color: var(--agri-border-light);
+}
+
+.agri-input:focus {
+  border-color: var(--agri-primary);
+  box-shadow: 0 0 0 4px var(--agri-primary-glow);
+}
+
+.agri-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2322c55e' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BADGE STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.agri-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.agri-badge-success {
+  background: rgba(74, 222, 128, 0.15);
+  color: var(--agri-primary-light);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+.agri-badge-warning {
+  background: rgba(234, 179, 8, 0.15);
+  color: var(--agri-accent-yellow);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+.agri-badge-danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--agri-accent-red);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.agri-badge-info {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--agri-accent-blue);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TAB STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.agri-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--agri-surface);
+  border-radius: var(--radius-lg);
+}
+
+.agri-tab {
+  padding: 12px 20px;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--agri-text-muted);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.agri-tab:hover {
+  color: var(--agri-text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.agri-tab.active {
+  color: var(--agri-primary-light);
+  background: var(--agri-bg-card);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PROGRESS BAR
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.agri-progress {
+  width: 100%;
+  height: 8px;
+  background: var(--agri-surface);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.agri-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--agri-primary), var(--agri-primary-light));
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ALERT STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.agri-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  border-left: 4px solid;
+}
+
+.agri-alert-success {
+  background: rgba(74, 222, 128, 0.08);
+  border-color: var(--agri-primary-light);
+}
+
+.agri-alert-warning {
+  background: rgba(234, 179, 8, 0.08);
+  border-color: var(--agri-accent-yellow);
+}
+
+.agri-alert-danger {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: var(--agri-accent-red);
+}
+
+.agri-alert-info {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: var(--agri-accent-blue);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCROLLBAR
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--agri-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--agri-border-light);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UTILITIES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.agri-gradient-text {
+  background: linear-gradient(135deg, var(--agri-primary-light) 0%, var(--agri-primary) 50%, var(--agri-primary-dark) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.agri-divider {
+  height: 1px;
+  background: var(--agri-border);
+  margin: 24px 0;
+}
+
+.agri-skeleton {
+  background: linear-gradient(90deg, var(--agri-surface) 0%, var(--agri-bg-elevated) 50%, var(--agri-surface) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+.agri-glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.agri-glow {
+  box-shadow: 0 0 30px var(--agri-primary-glow);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  h1 { font-size: 2rem; }
+  h2 { font-size: 1.5rem; }
+  h3 { font-size: 1.25rem; }
+  
+  .agri-card {
+    padding: 16px;
+  }
+  
+  .agri-btn {
+    padding: 10px 20px;
+    font-size: 0.85rem;
+  }
+}

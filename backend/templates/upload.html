@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriBot - Upload</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/chat" class="logo">AgriBot 🌿</a>
+        <div class="nav-links">
+            <a href="/">Chat</a>
+            <a href="/upload">Upload</a>
+        </div>
+    </nav>
+
+    <h1>Upload for Analysis</h1>
+
+    <div class="container">
+        <h2>Upload Image or Document</h2>
+        <form action="/upload" method="post" enctype="multipart/form-data" class="upload-form">
+            
+            <div class="file-upload-wrapper" id="file-drop-zone">
+                <label for="file-upload" class="file-upload-label">
+                    <div class="icon">📤</div>
+                    <p>Click to select files or drag and drop</p>
+                    <span>Images (JPG, PNG) or Documents (PDF, TXT)</span>
+                </label>
+                <input type="file" id="file-upload" name="image" accept="image/*,.pdf,.txt" onchange="updateFileName(this)">
+                </div>
+            
+            <div id="file-name-display">No file selected</div>
+
+            <button type="submit" class="btn">Analyze</button>
+        </form>
+    </div>
+
+    <footer class="footer">© 2025 AgriBot</footer>
+
+    <script>
+        const dropZone = document.getElementById('file-drop-zone');
+        const fileInput = document.getElementById('file-upload');
+        const fileNameDisplay = document.getElementById('file-name-display');
+
+        // Update file name display
+        function updateFileName(input) {
+            if (input.files && input.files.length > 0) {
+                const file = input.files[0];
+                fileNameDisplay.textContent = file.name;
+                
+                // Dynamically change the 'name' attribute based on file type
+                if (file.type.startsWith('image/')) {
+                    input.name = 'image';
+                } else if (file.type === 'application/pdf' || file.type === 'text/plain') {
+                    input.name = 'document';
+                } else {
+                    input.name = 'file'; // Fallback
+                }
+            } else {
+                fileNameDisplay.textContent = 'No file selected';
+            }
+        }
+
+        // Drag and Drop listeners
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                updateFileName(fileInput);
+            }
+        });
+
+        // Clicking the zone opens the file dialog
+        dropZone.addEventListener('click', () => {
+            fileInput.click();
+        });
+    </script>
+</body>
+</html>

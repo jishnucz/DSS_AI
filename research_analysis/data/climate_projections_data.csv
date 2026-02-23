@@ -1,0 +1,28 @@
+Scenario,Year,Temperature_Increase_C,Precipitation_Change_Pct,Projected_Stress_Days,Projected_Yield_kg_ha
+SSP1-2.6 (Sustainable),2020,0.3,0,29.5,2758.0
+SSP1-2.6 (Sustainable),2030,0.5,2,31.9,2730.0
+SSP1-2.6 (Sustainable),2040,0.7,3,34.6,2702.0
+SSP1-2.6 (Sustainable),2050,0.9,4,37.3,2674.0
+SSP1-2.6 (Sustainable),2060,1.0,5,38.5,2660.0
+SSP1-2.6 (Sustainable),2070,1.1,5,40.0,2646.0
+SSP1-2.6 (Sustainable),2080,1.1,5,40.0,2646.0
+SSP1-2.6 (Sustainable),2090,1.1,5,40.0,2646.0
+SSP1-2.6 (Sustainable),2100,1.1,5,40.0,2646.0
+SSP2-4.5 (Middle Road),2020,0.3,0,29.5,2758.0
+SSP2-4.5 (Middle Road),2030,0.6,2,33.4,2716.0
+SSP2-4.5 (Middle Road),2040,0.9,4,37.3,2674.0
+SSP2-4.5 (Middle Road),2050,1.2,6,41.2,2632.0
+SSP2-4.5 (Middle Road),2060,1.5,8,45.1,2590.0
+SSP2-4.5 (Middle Road),2070,1.8,9,49.3,2548.0
+SSP2-4.5 (Middle Road),2080,2.0,10,52.0,2520.0
+SSP2-4.5 (Middle Road),2090,2.2,11,54.7,2492.0
+SSP2-4.5 (Middle Road),2100,2.4,12,57.4,2464.0
+SSP5-8.5 (Fossil Fuels),2020,0.3,0,29.5,2758.0
+SSP5-8.5 (Fossil Fuels),2030,0.7,3,34.6,2702.0
+SSP5-8.5 (Fossil Fuels),2040,1.2,6,41.2,2632.0
+SSP5-8.5 (Fossil Fuels),2050,1.8,10,49.0,2548.0
+SSP5-8.5 (Fossil Fuels),2060,2.4,14,56.8,2464.0
+SSP5-8.5 (Fossil Fuels),2070,3.0,18,64.6,2380.0
+SSP5-8.5 (Fossil Fuels),2080,3.6,22,72.4,2296.0
+SSP5-8.5 (Fossil Fuels),2090,4.2,26,80.2,2212.0
+SSP5-8.5 (Fossil Fuels),2100,4.8,30,88.0,2128.0

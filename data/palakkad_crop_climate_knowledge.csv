@@ -1,0 +1,8 @@
+Crop,Season,Growth_Stage,Temperature_Range_C,Rainfall_Requirement,Wind_Risk,Source
+Rice,Kharif,Sowing/Transplanting,20-30,High,Low,KAU PoP 2016
+Rice,Kharif,Vegetative,22-32,High,Medium,KAU PoP 2016
+Rice,Kharif,Flowering,16-20,Moderate,Medium,KAU PoP 2016
+Rice,Kharif,Grain Filling,<35,Moderate,High,KAU PoP 2016
+Banana,Kharif,Vegetative,25-30,High,High,KAU PoP 2016
+Banana,Kharif,Flowering,24-30,Moderate,High,KAU PoP 2016
+Coconut,All Seasons,Nut Setting,24-32,Moderate,Medium,KAU PoP 2016

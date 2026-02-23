@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriBot - Result</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/chat" class="logo">AgriBot 🌿</a>
+        <div class="nav-links">
+            <a href="/chat">Chat</a>
+            <a href="/upload">Upload</a>
+        </div>
+    </nav>
+
+    <h1>Analysis Result</h1>
+
+    <div class="container result-container">
+        <h2>Your Analysis</h2>
+        {% if image_url %}
+            <img src="{{ image_url }}" alt="Uploaded Image">
+        {% endif %}
+        <p>{{ result }}</p>
+        <a href="/upload" class="btn">Upload Another</a>
+    </div>
+
+    <footer class="footer">© 2025 AgriBot</footer>
+</body>
+</html>

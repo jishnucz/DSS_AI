@@ -1,0 +1,5 @@
+crop_id,crop_name,botanical_name,crop_category,dominant_in_palakkad,season_type,duration_days,soil_preference,water_requirement,temperature_optimal_min,temperature_optimal_max
+C01,Rice,Oryza sativa,Cereal,Yes,Virippu/Mundakan/Puncha,110,Clay/Loam,High,20,32
+C02,Coconut,Cocos nucifera,Oilseed,Yes,Perennial,365,Sandy loam,Medium,22,34
+C03,Banana,Musa spp.,Fruit,Yes,Year-round,300,Well drained loam,High,24,34
+C04,Tapioca,Manihot esculenta,Tuber,Yes,Kharif,240,Loamy,Medium,25,35

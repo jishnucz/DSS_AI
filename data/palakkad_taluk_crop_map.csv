@@ -1,0 +1,14 @@
+taluk_id,taluk_name,latitude,longitude,area_sqkm,total_cultivated_area_ha,agro_zone,rainfall_mm,soil_type,irrigation_source
+T01,Palakkad,10.7760,76.6548,427,15800,Midland,2100,"Laterite, Alluvial",Canal (Malampuzha Dam)
+T02,Chittur,10.6982,76.7477,478,22300,Plains,1800,Black Cotton Soil,Canal + Borewell
+T03,Alathur,10.5670,76.5499,389,17500,Midland,2300,Laterite,Tanks + Wells
+T04,Kollengode,10.5923,76.6878,312,11200,Highland Transition,2800,Forest Loam,Rainfed + Wells
+T05,Nenmara,10.5921,76.8341,298,10500,Highland,3200,"Forest Loam, Laterite",Streams + Wells
+T06,Ottapalam,10.7750,76.3778,356,14200,Lowland,2500,"Alluvial, Sandy",Bharathapuzha River
+T07,Mannarkad,10.9869,76.4717,567,9800,Highland,3500,Forest Loam,Rainfed
+T08,Attappadi,11.1000,76.5500,745,3500,Rainshadow Highland,1200,"Degraded Forest, Rocky",Rainfed (drought-prone)
+T09,Pattambi,10.8110,76.2000,287,12800,Lowland,2600,Alluvial,Canal + River
+T10,Thrithala,10.8833,76.3667,198,10500,Lowland,2700,"Alluvial, Coastal",Canal + Wells
+T11,Sreekrishnapuram,10.6167,76.5167,245,9800,Midland,2400,Laterite,Tanks + Wells
+T12,Kuzhalmannam,10.8833,76.6000,234,8900,Midland,2200,Laterite,Wells + Tanks
+T13,Malampuzha,10.8167,76.6833,312,7200,Midland-Highland,2000,"Red Loam, Laterite",Malampuzha Dam

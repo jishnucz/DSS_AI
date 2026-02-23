@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriBot - Chat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/chat" class="logo">AgriBot 🌿</a>
+        <div class="nav-links">
+            <a href="/chat">Chat</a>
+            <a href="/upload">Upload</a>
+        </div>
+    </nav>
+
+    <h1>AgriBot</h1>
+
+    <div class="chat-container">
+        <div id="chatBox">
+            <div class="message bot-message">Welcome to AgriBot! How can I help you with your crops today?</div>
+        </div>
+        <div class="input-area">
+            <input type="text" id="userInput" placeholder="Ask about crops, prices, or diseases...">
+            <button onclick="sendMessage()" title="Send">&rarr;</button>
+        </div>
+    </div>
+
+    <footer class="footer">© 2025 AgriBot | AI-Powered Assistance</footer>
+
+    <script>
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const chatBox = document.getElementById('chatBox');
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message user-message';
+            userMsg.textContent = message;
+            chatBox.appendChild(userMsg);
+            input.value = '';
+
+            fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                const botMsg = document.createElement('div');
+                botMsg.className = 'message bot-message';
+                if (data.type === 'price') {
+                    let content = '';
+                    if (!data.data || data.data.length === 0) {
+                        content = 'No price data available.';
+                    } else {
+                        data.data.forEach(item => {
+                            if (item.message) {
+                                content += `<p>${item.message}</p>`;
+                            }
+                            if (item.commodity) {
+                                content += `
+                                    <table>
+                                        <tr>
+                                            <th>Commodity</th>
+                                            <td>${item.commodity || 'N/A'}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Market</th>
+                                            <td>${item.market || 'N/A'}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>State</th>
+                                            <td>${item.state || 'N/A'}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Date</th>
+                                            <td>${item.date || 'N/A'}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Price Range</th>
+                                            <td>${item.price_range || 'N/A'}</td>
+                                        </tr>
+                                    </table>`;
+                            }
+                        });
+                    }
+                    botMsg.innerHTML = content || 'No price data available.';
+                } else {
+                    botMsg.innerHTML = (data.response || 'No response provided.').replace(/\n/g, '<br>');
+                }
+                chatBox.appendChild(botMsg);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const botMsg = document.createElement('div');
+                botMsg.className = 'message bot-message';
+                botMsg.textContent = `Error retrieving response: ${error.message}. Please try again.`;
+                chatBox.appendChild(botMsg);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            });
+        }
+
+        document.getElementById('userInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
+</body>
+</html>

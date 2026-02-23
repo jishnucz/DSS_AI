@@ -1,0 +1,55 @@
+/* --- Google Font Import --- */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+/* --- CSS Variables (Color Palette) --- */
+:root {
+    --primary-color: #2E7D32;  /* Dark Green */
+    --primary-dark: #1B5E20;   /* Darkest Green */
+    --secondary-color: #4CAF50; /* Bright Green */
+    --light-green-bg: #F4FBF4; /* Very Light Background */
+    --light-green-container: #E8F5E9; /* Light Container Bg */
+    --text-color: #333;
+    --text-light: #fefefe;
+    --container-bg: #FFFFFF;
+    --shadow-color: rgba(46, 125, 50, 0.15); /* Soft Green Shadow */
+    --border-color: #DDEFE0;
+}
+
+/* --- Global Styles --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: var(--light-green-bg);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+h1 {
+    font-size: 2.5em;
+    margin: 20px 0;
+    color: var(--primary-dark);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+    animation: fadeInDown 0.8s ease-out;
+}
+
+h2 {
+    font-size: 1.5em;
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+p {
+    margin-bottom: 1rem;
+}
+
+... (rest of CSS remains the same) ...

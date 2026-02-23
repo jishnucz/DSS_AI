@@ -1,0 +1,171 @@
+================================================================================
+              PALAKKAD CROP STRESS FORECASTING SYSTEM
+                      HOW TO RUN GUIDE
+================================================================================
+
+This document explains how to run both:
+1. The WEB APPLICATION (Frontend + Backend)
+2. The RESEARCH ANALYSIS (ML Scripts + Figures)
+
+================================================================================
+PREREQUISITES
+================================================================================
+
+1. Python 3.8+ installed
+2. Node.js 16+ installed (for frontend)
+3. Required Python packages:
+   pip install pandas numpy matplotlib scikit-learn requests
+
+================================================================================
+FOLDER STRUCTURE
+================================================================================
+
+palakkad_dss/
+├── backend/           <- Flask API (app.py, dss_engine.py, chatbot.py)
+├── frontend/          <- React App (Dashboard, Maps, DSS Interface)
+├── data/              <- Raw data files (ERA5, crop calendars)
+└── research_analysis/ <- ML Analysis & Publication Figures
+    ├── scripts/       <- Python scripts for analysis
+    ├── figures/       <- Generated PNG figures
+    ├── data/          <- Processed CSV files
+    └── reports/       <- Documentation
+
+================================================================================
+PART 1: RUNNING THE WEB APPLICATION
+================================================================================
+
+STEP 1: Start the Backend Server
+---------------------------------
+Open Terminal/PowerShell:
+
+    cd palakkad_dss/backend
+    pip install -r ../requirements.txt
+    python app.py
+
+Expected output: "Running on http://127.0.0.1:5000"
+
+STEP 2: Start the Frontend
+---------------------------------
+Open NEW Terminal/PowerShell:
+
+    cd palakkad_dss/frontend
+    npm install
+    npm run dev
+
+Expected output: "Local: http://localhost:5173"
+
+STEP 3: Open the App
+---------------------------------
+Open browser and go to: http://localhost:5173
+
+Features available:
+- Dashboard: View weather data and forecasts
+- DSS Input: Enter crop and field data
+- DSS Output: Get stress predictions and recommendations
+- ChatBot: Ask questions about crops
+- Map Tab: View Palakkad taluks
+
+================================================================================
+PART 2: RUNNING THE RESEARCH ANALYSIS
+================================================================================
+
+All scripts are in: research_analysis/scripts/
+
+SCRIPT 1: Taluk Vegetation Mapping
+-----------------------------------
+    cd palakkad_dss
+    python research_analysis/scripts/palakkad_taluk_vegetation_map.py
+
+Generates:
+- palakkad_taluk_crop_map.png
+- palakkad_stress_risk_map.png
+- palakkad_agrozone_summary.png
+- palakkad_taluk_characteristics.csv
+
+SCRIPT 2: Advanced Analysis (All-in-One)
+-----------------------------------------
+    cd palakkad_dss
+    python research_analysis/scripts/advanced_analysis.py
+
+Generates:
+- palakkad_gis_maps.png (GIS-style maps with coordinates)
+- climate_change_projections.png (CMIP6 scenarios)
+- model_comparison.png (vs DSSAT, AquaCrop)
+- explainability_analysis.png (SHAP-style features)
+- publication_graphical_abstract.png (Journal-ready summary)
+
+SCRIPT 3: Google Earth Engine NDVI (Optional)
+-----------------------------------------------
+Requires Google Earth Engine account.
+    python research_analysis/scripts/gee_ndvi_extraction.py
+
+================================================================================
+QUICK START (Run Everything)
+================================================================================
+
+PowerShell commands to run all at once:
+
+# 1. Run research analysis
+cd "c:\Users\ASUS\OneDrive\Desktop\Phase 2 MTECH\palakkad_dss"
+python research_analysis/scripts/palakkad_taluk_vegetation_map.py
+python research_analysis/scripts/advanced_analysis.py
+
+# 2. Start backend (in new terminal)
+cd backend
+python app.py
+
+# 3. Start frontend (in another new terminal)
+cd frontend
+npm run dev
+
+================================================================================
+OUTPUT FILES SUMMARY
+================================================================================
+
+After running all scripts, you will have:
+
+FIGURES (research_analysis/figures/):
+--------------------------------------
+1. palakkad_gis_maps.png         - GIS-style taluk boundaries
+2. palakkad_taluk_crop_map.png   - Crops per taluk
+3. palakkad_stress_risk_map.png  - Drought risk visualization
+4. palakkad_agrozone_summary.png - Zone distribution charts
+5. climate_change_projections.png - CMIP6 2020-2100 scenarios
+6. model_comparison.png          - vs DSSAT/AquaCrop/APSIM
+7. explainability_analysis.png   - SHAP feature importance
+8. publication_graphical_abstract.png - Journal-ready summary
+9. era5_vs_nasa_power_validation.png - Data validation
+
+DATA (research_analysis/data/):
+--------------------------------------
+1. palakkad_taluk_characteristics.csv - All taluk data
+2. climate_projections_data.csv - CMIP6 projection numbers
+3. palakkad_taluk_table.tex - LaTeX table for publication
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Problem: "ModuleNotFoundError: No module named 'xxx'"
+Solution: pip install xxx
+
+Problem: "Port 5000 already in use"
+Solution: Kill existing process or use different port:
+    python app.py --port 5001
+
+Problem: "npm: command not found"
+Solution: Install Node.js from https://nodejs.org/
+
+Problem: Figures not showing properly
+Solution: Ensure matplotlib is installed:
+    pip install matplotlib
+
+================================================================================
+CONTACT
+================================================================================
+
+For questions about this M.Tech project:
+- Check RESEARCH_REPORT.txt for methodology details
+- Check ENHANCEMENT_ROADMAP.md for future improvements
+
+================================================================================

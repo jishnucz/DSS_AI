@@ -1,0 +1,11 @@
+crop_id,season,stage_id,stage_name,start_day,end_day,duration_days,sensitivity_level,critical_variable
+C01,Virippu,S1,Germination,1,15,15,Medium,SoilMoisture
+C01,Virippu,S2,Vegetative,16,50,35,Low,Temperature
+C01,Virippu,S3,Flowering,51,75,25,High,Temperature
+C01,Virippu,S4,GrainFilling,76,100,25,High,SoilMoisture
+C01,Virippu,S5,Maturity,101,110,10,Low,Rainfall
+C01,Mundakan,S1,Germination,1,15,15,Medium,SoilMoisture
+C01,Mundakan,S2,Vegetative,16,50,35,Low,Temperature
+C01,Mundakan,S3,Flowering,51,75,25,High,Temperature
+C01,Mundakan,S4,GrainFilling,76,100,25,High,SoilMoisture
+C01,Mundakan,S5,Maturity,101,110,10,Low,Rainfall

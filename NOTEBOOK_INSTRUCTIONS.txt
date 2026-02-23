@@ -1,0 +1,104 @@
+================================================================================
+           HOW TO RUN THE JUPYTER NOTEBOOK (AI_ML_Analysis_Enhanced_v2)
+================================================================================
+
+## The Errors You're Seeing Are Normal!
+
+The red underlines you see in the notebook are because the editor doesn't know
+about variables that will be created when you RUN the cells.
+
+These errors will disappear once you run the notebook properly.
+
+================================================================================
+STEP-BY-STEP INSTRUCTIONS
+================================================================================
+
+STEP 1: Install Required Packages
+----------------------------------
+Open a terminal and run:
+
+    pip install pandas numpy matplotlib scikit-learn scipy
+
+STEP 2: Open the Notebook
+----------------------------------
+In VS Code:
+1. Open: AI_ML_Analysis_Enhanced_v2.ipynb
+2. Click "Select Kernel" in top right
+3. Choose Python 3.x (your installed Python)
+
+STEP 3: Run All Cells in Order
+----------------------------------
+Option A (Recommended - Run Everything):
+  - Press Ctrl+Shift+P (or Cmd+Shift+P on Mac)
+  - Type "Run All"
+  - Select "Notebook: Execute All Cells"
+  - Wait 2-3 minutes for all cells to complete
+
+Option B (Run One by One):
+  - Click on first cell
+  - Press Shift+Enter to run and move to next
+  - Repeat for each cell (watch the output)
+
+STEP 4: Wait for Completion
+----------------------------------
+You'll see output like:
+  ✓ Loading ERA5 data...
+  ✓ Processing daily aggregates...
+  ✓ Training models...
+  ✓ Generating figures...
+  ✓ ANALYSIS COMPLETE!
+
+================================================================================
+WHAT IF I GET ERRORS?
+================================================================================
+
+ERROR: "No module named 'xxx'"
+FIX: Install the missing package:
+     pip install xxx
+
+ERROR: "FileNotFoundError: data/xxx.csv"
+FIX: Make sure you're in the palakkad_dss folder when running
+
+ERROR: Variables not defined
+FIX: Run ALL cells starting from Cell 1. Don't skip cells!
+
+ERROR: Kernel crash / out of memory
+FIX: Restart kernel (click X on kernel, then run again)
+     Or reduce data size in the loading cells
+
+================================================================================
+EXPECTED RESULTS
+================================================================================
+
+After running successfully, you'll see:
+
+1. Data Statistics
+   - ERA5 records: ~670,000 hourly observations
+   - Daily data: ~5,800 days (2010-2026)
+   - Flood events: 45 documented events
+   - Drought events: 16 documented events
+
+2. Model Performance
+   - Day+1 Forecast: 85-92% accuracy
+   - Day+3 Forecast: 80-85% accuracy
+   - Day+7 Forecast: 75-82% accuracy
+
+3. Generated Figures (saved as files)
+   - Model performance comparison
+   - Feature importance ranking
+   - Climate trends over time
+   - Yield correlation plots
+
+4. Publication Summary
+   - Research findings formatted for journal submission
+
+================================================================================
+STILL HAVING ISSUES?
+================================================================================
+
+1. Check Python version: python --version (should be 3.8+)
+2. Check packages: pip list | findstr "pandas numpy matplotlib scikit"
+3. Restart VS Code
+4. Try opening in Jupyter Lab instead: jupyter lab
+
+================================================================================

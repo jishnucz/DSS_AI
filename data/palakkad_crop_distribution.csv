@@ -1,0 +1,55 @@
+taluk_id,taluk_name,crop_type,crop_name,area_hectares,percentage_of_taluk,season,yield_tons_per_ha,total_production_tons,primary_variety
+T01,Palakkad,Cereal,Rice (Paddy),12500,79.1,Kharif/Rabi,3.8,47500,"Uma, Jyothi"
+T01,Palakkad,Plantation,Coconut,2100,13.3,Perennial,12.5,26250,Tall Varieties
+T01,Palakkad,Vegetable,Mixed Vegetables,850,5.4,Year-round,15.0,12750,"Tomato, Brinjal, Okra"
+T01,Palakkad,Fruit,Banana,350,2.2,Year-round,35.0,12250,"Nendran, Robusta"
+T02,Chittur,Cereal,Rice (Paddy),18000,80.7,Kharif/Rabi,4.2,75600,"ADT-36, ADT-43"
+T02,Chittur,Commercial,Sugarcane,2500,11.2,Annual,80.0,200000,Co-86032
+T02,Chittur,Fruit,Banana,1200,5.4,Year-round,38.0,45600,"Nendran, Poovan"
+T02,Chittur,Plantation,Coconut,600,2.7,Perennial,11.0,6600,West Coast Tall
+T03,Alathur,Cereal,Rice (Paddy),14200,81.1,Kharif/Rabi,3.5,49700,"Uma, കാവ്യ (Kavya)"
+T03,Alathur,Plantation,Coconut,2100,12.0,Perennial,11.5,24150,Tall + Dwarf
+T03,Alathur,Tuber,Tapioca (Cassava),800,4.6,Kharif,25.0,20000,Local Varieties
+T03,Alathur,Fruit,Banana,400,2.3,Year-round,32.0,12800,Nendran
+T04,Kollengode,Cereal,Rice (Paddy),8500,75.9,Kharif/Rabi,3.2,27200,"Jyothi, Uma"
+T04,Kollengode,Spice,Pepper,1200,10.7,Perennial,0.8,960,"Panniyur-1, Karimunda"
+T04,Kollengode,Plantation,Rubber,800,7.1,Perennial,1.8,1440,RRII-105
+T04,Kollengode,Plantation,Coconut,700,6.3,Perennial,10.0,7000,Tall Varieties
+T05,Nenmara,Cereal,Rice (Paddy),7800,74.3,Kharif/Rabi,3.0,23400,"Jaya, Uma"
+T05,Nenmara,Plantation,Arecanut,1400,13.3,Perennial,1.5,2100,"Mangala, Sreemangala"
+T05,Nenmara,Spice,Pepper,900,8.6,Perennial,0.7,630,"Panniyur-1, Subhakara"
+T05,Nenmara,Plantation,Coconut,400,3.8,Perennial,9.5,3800,Tall Varieties
+T06,Ottapalam,Cereal,Rice (Paddy),11000,77.5,Kharif/Rabi,3.6,39600,"Uma, Jyothi"
+T06,Ottapalam,Plantation,Coconut,2200,15.5,Perennial,13.0,28600,"Tall, WCT"
+T06,Ottapalam,Fruit,Banana,700,4.9,Year-round,33.0,23100,"Nendran, Robusta"
+T06,Ottapalam,Vegetable,Mixed Vegetables,300,2.1,Year-round,12.0,3600,Mixed
+T07,Mannarkad,Cereal,Rice (Paddy),6200,63.3,Kharif/Rabi,2.8,17360,"Uma, Local"
+T07,Mannarkad,Plantation,Rubber,2100,21.4,Perennial,1.9,3990,RRII-105/118
+T07,Mannarkad,Spice,Pepper,1000,10.2,Perennial,0.6,600,"Karimunda, Panniyur-1"
+T07,Mannarkad,Plantation,Coconut,500,5.1,Perennial,9.0,4500,Tall Varieties
+T08,Attappadi,Millet,Finger Millet (Ragi),800,22.9,Kharif,1.8,1440,"GPU-28, ML-365"
+T08,Attappadi,Millet,Little Millet,400,11.4,Kharif,1.2,480,Local Varieties
+T08,Attappadi,Cereal,Rice (Paddy),1200,34.3,Kharif,2.0,2400,Local Drought-Resistant
+T08,Attappadi,Pulse,Red Gram (Pigeon Pea),600,17.1,Kharif,0.9,540,BRG-2
+T08,Attappadi,Oilseed,Groundnut,350,10.0,Kharif,1.5,525,TMV-2
+T08,Attappadi,Pulse,Horse Gram,150,4.3,Kharif,0.8,120,Local
+T09,Pattambi,Cereal,Rice (Paddy),9500,74.2,Kharif/Rabi,4.0,38000,"Uma, Jyothi, Jaya"
+T09,Pattambi,Plantation,Coconut,2400,18.8,Perennial,14.0,33600,"Tall, Dwarf Hybrids"
+T09,Pattambi,Vegetable,Mixed Vegetables,600,4.7,Year-round,16.0,9600,"Tomato, Cucumber"
+T09,Pattambi,Fruit,Banana,300,2.3,Year-round,36.0,10800,Nendran
+T10,Thrithala,Cereal,Rice (Paddy),8200,78.1,Kharif/Rabi,3.8,31160,"Uma, Jyothi"
+T10,Thrithala,Plantation,Coconut,1500,14.3,Perennial,12.0,18000,Tall Varieties
+T10,Thrithala,Plantation,Arecanut,600,5.7,Perennial,1.4,840,Mangala
+T10,Thrithala,Fruit,Banana,200,1.9,Year-round,34.0,6800,Nendran
+T11,Sreekrishnapuram,Cereal,Rice (Paddy),7600,77.6,Kharif/Rabi,3.4,25840,"Uma, Jyothi"
+T11,Sreekrishnapuram,Plantation,Coconut,1500,15.3,Perennial,11.0,16500,Tall + Dwarf
+T11,Sreekrishnapuram,Fruit,Banana,500,5.1,Year-round,33.0,16500,Nendran
+T11,Sreekrishnapuram,Vegetable,Mixed Vegetables,200,2.0,Year-round,14.0,2800,Mixed
+T12,Kuzhalmannam,Cereal,Rice (Paddy),6800,76.4,Kharif/Rabi,3.6,24480,"Uma, Jyothi"
+T12,Kuzhalmannam,Plantation,Coconut,1300,14.6,Perennial,11.5,14950,Tall Varieties
+T12,Kuzhalmannam,Vegetable,Mixed Vegetables,600,6.7,Year-round,17.0,10200,"Tomato, Chilli, Brinjal"
+T12,Kuzhalmannam,Fruit,Banana,200,2.2,Year-round,35.0,7000,Nendran
+T13,Malampuzha,Cereal,Rice (Paddy),5500,76.4,Kharif/Rabi,3.5,19250,"Uma, Jyothi"
+T13,Malampuzha,Vegetable,Mixed Vegetables,900,12.5,Year-round,18.0,16200,"Tomato, Capsicum, Beans"
+T13,Malampuzha,Fruit,Mixed Fruits,600,8.3,Year-round,20.0,12000,"Mango, Guava, Papaya"
+T13,Malampuzha,Plantation,Coconut,200,2.8,Perennial,10.0,2000,Tall Varieties
