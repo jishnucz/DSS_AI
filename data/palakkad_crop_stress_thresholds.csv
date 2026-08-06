@@ -2,8 +2,10 @@ crop_id,stage_name,variable,optimal_min,optimal_max,stress_threshold_low,stress_
 C01,Germination,AirTemp,20,32,18,35,Thermal
 C01,Germination,SoilMoisture,0.25,0.4,0.2,0.5,Moisture
 C01,Vegetative,AirTemp,22,33,18,36,Heat
+C01,Vegetative,SoilMoisture,0.30,0.45,0.22,0.55,Drought
 C01,Vegetative,Rainfall,5,20,0,60,WaterStress
 C01,Flowering,AirTemp,22,32,18,35,HeatCritical
+C01,Flowering,SoilMoisture,0.30,0.45,0.22,0.55,Drought
 C01,Flowering,Rainfall,5,15,0,50,FloodRisk
 C01,GrainFilling,SoilMoisture,0.3,0.45,0.22,0.55,Drought
 C01,Maturity,Rainfall,0,10,0,40,HarvestRisk

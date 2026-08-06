@@ -8,6 +8,10 @@ Enhanced Decision Support System (DSS) Engine for Palakkad Agriculture
 - Multi-day forecast with actionable insights
 """
 
+import warnings
+# Suppress scikit-learn version mismatch warnings early at module load
+warnings.filterwarnings('ignore', category=Warning, module='sklearn.*')
+
 import numpy as np
 import joblib
 import requests
@@ -32,6 +36,14 @@ try:
 except ImportError:
     print("⚠️ XGBoost not installed. Install with: pip install xgboost")
     XGBOOST_AVAILABLE = False
+
+# Try to import Research AI for advanced analysis
+try:
+    import research_ai
+    RESEARCH_AI_AVAILABLE = True
+except ImportError:
+    RESEARCH_AI_AVAILABLE = False
+    print("⚠️ Research AI not available - running without advanced analysis")
 
 # -----------------------------
 # LOAD AI MODEL + SCALER
@@ -2551,6 +2563,484 @@ def generate_advisories(crop, climate, stress, growth_info, pest_risks, irrigati
 
 
 # -----------------------------
+# 7-DAY STRESS FORECAST ENGINE
+# Applies ML ensemble to each forecast day's weather
+# -----------------------------
+def generate_daily_recommendations(day, date, crop, climate, stress_label, stress_scores, growth_info):
+    """Generate detailed, actionable recommendations for a specific forecast day."""
+    recs = []
+    temp = climate["t2m_C"]
+    t_max = climate.get("t_max", temp + 4)
+    rain = climate["tp_mm"]
+    soil = climate["swvl1"]
+    wind = climate["wind_speed"]
+    precip_prob = climate.get("precip_prob", 20)
+    thresholds = CROP_THRESHOLDS.get(crop, DEFAULT_THRESHOLDS)
+    sm_opt_min, sm_opt_max = thresholds["soil_moisture_optimal"]
+    stage = growth_info.get("name", "Vegetative")
+    day_label = f"Day {day}" + (f" ({date})" if date else "")
+
+    # --- Irrigation ---
+    if soil < sm_opt_min * 0.8:
+        mm_needed = round((sm_opt_min - soil) * 1000, 0)
+        recs.append({
+            "category": "Irrigation", "priority": "Critical", "icon": "💧",
+            "title": f"{day_label}: Emergency Irrigation Required",
+            "detail": (f"Soil moisture critically low at {soil*100:.0f}% (target: "
+                       f"{sm_opt_min*100:.0f}–{sm_opt_max*100:.0f}%). Apply ≈{mm_needed:.0f}mm water."),
+            "action": (f"Irrigate early morning (5–7 AM). "
+                       f"Rain probability: {precip_prob}% — do not wait if <30%.")
+        })
+    elif soil < sm_opt_min:
+        recs.append({
+            "category": "Irrigation", "priority": "High", "icon": "💧",
+            "title": f"{day_label}: Schedule Irrigation",
+            "detail": (f"Soil moisture {soil*100:.0f}% is below optimal "
+                       f"({sm_opt_min*100:.0f}–{sm_opt_max*100:.0f}%). Crop water deficit building."),
+            "action": (f"2-hour irrigation early morning. Skip if rain probability >50% "
+                       f"(currently {precip_prob}%).")
+        })
+    elif rain >= 5:
+        recs.append({
+            "category": "Irrigation", "priority": "Info", "icon": "🌧️",
+            "title": f"{day_label}: Rain Expected – Skip Irrigation",
+            "detail": f"{rain:.0f}mm forecast. Soil moisture: {soil*100:.0f}%.",
+            "action": "Clear drainage channels before rain. Monitor soil post-rain to avoid waterlogging."
+        })
+
+    # --- Temperature stress ---
+    if t_max > 38:
+        recs.append({
+            "category": "Heat Management", "priority": "Critical", "icon": "🌡️",
+            "title": f"{day_label}: Extreme Heat Alert (max {t_max:.0f}°C)",
+            "detail": (f"Temperatures above 38°C cause pollen sterility in {stage} stage. "
+                       f"Yield loss can exceed 20% per day of exposure."),
+            "action": ("Irrigate twice — dawn and dusk. Apply kaolin clay foliar spray (5%) "
+                       "to reduce leaf temperature. Avoid all field operations 10AM–4PM.")
+        })
+    elif temp > 35:
+        recs.append({
+            "category": "Heat Management", "priority": "High", "icon": "🌡️",
+            "title": f"{day_label}: High Temperature ({temp:.0f}°C)",
+            "detail": (f"{stage} stage is under heat stress. Transpiration demand exceeds "
+                       f"uptake capacity at this temperature."),
+            "action": ("Irrigate in early morning. Apply foliar potassium (KNO₃ 5g/L) "
+                       "to improve stress tolerance. Avoid urea top-dressing today.")
+        })
+    elif temp > 32 and stress_label != "Normal":
+        recs.append({
+            "category": "Heat Management", "priority": "Moderate", "icon": "⚠️",
+            "title": f"{day_label}: Warm Conditions ({temp:.0f}°C)",
+            "detail": f"Combined with low moisture, warm temp accelerates stress in {stage} stage.",
+            "action": "Maintain soil moisture. Monitor for leaf rolling (first drought sign)."
+        })
+
+    # --- Rainfall / waterlogging ---
+    if rain > 60:
+        recs.append({
+            "category": "Flood/Drainage", "priority": "Critical", "icon": "🌊",
+            "title": f"{day_label}: Heavy Rain Warning ({rain:.0f}mm)",
+            "detail": (f"Waterlogging > 24h causes anaerobic stress and root damage in {stage} stage. "
+                       f"Disease pressure will spike 24–48h after heavy rain."),
+            "action": ("Open all drainage channels NOW. After rain: scout for blast, sheath blight. "
+                       "Do NOT apply fertilizer for 72h. Delay all pesticide sprays.")
+        })
+    elif rain > 30:
+        recs.append({
+            "category": "Drainage", "priority": "High", "icon": "🌧️",
+            "title": f"{day_label}: Significant Rainfall ({rain:.0f}mm)",
+            "detail": f"Excess water risk. {stage} stage susceptible to soil compaction and fungal diseases.",
+            "action": ("Check field bunds and drainage. Delay any fertilizer application by 48h. "
+                       "Scout for fungal symptoms 2 days after rain.")
+        })
+
+    # --- Wind damage ---
+    if wind > 30:
+        recs.append({
+            "category": "Wind Protection", "priority": "High", "icon": "💨",
+            "title": f"{day_label}: Strong Wind Warning ({wind:.0f} km/h)",
+            "detail": (f"Wind above 30 km/h causes lodging in tall-standing crops at {stage} stage. "
+                       f"Spray drift risk is also high."),
+            "action": ("Cancel all spraying operations. Install wind barriers if available. "
+                       "Check crop support structures. Assess lodging risk after wind event.")
+        })
+    elif wind > 20:
+        recs.append({
+            "category": "Wind", "priority": "Moderate", "icon": "💨",
+            "title": f"{day_label}: Moderate Wind ({wind:.0f} km/h)",
+            "detail": "Spray drift possible. Moderate desiccation risk if soil is already dry.",
+            "action": "Use drift-reducing nozzles if spraying essential. Spray early morning only."
+        })
+
+    # --- Growth-stage critical advisories ---
+    critical_stages = {
+        "Flowering": {
+            "priority": "Critical",
+            "title": f"{day_label}: CRITICAL – Flowering Stage",
+            "detail": (f"Flowering is the most stress-sensitive stage. Any temperature >35°C, "
+                       f"wind >20 km/h, or water stress causes irreversible spikelet sterility."),
+            "action": ("Maintain soil moisture at field capacity. NO spraying during anthesis "
+                       "(10AM–2PM). If temp >35°C today, prioritise evening irrigation.")
+        },
+        "Panicle Initiation": {
+            "priority": "High",
+            "title": f"{day_label}: Panicle Initiation — Yield-Determining Stage",
+            "detail": ("Panicle initiation determines spikelet number. Stress now directly "
+                       "reduces potential yield. Apply K fertiliser if not done."),
+            "action": ("Apply MOP 25 kg/ha if not applied. Ensure soil moisture. "
+                       "Scout for stem borer (check for dead hearts).")
+        },
+        "Grain Filling": {
+            "priority": "Moderate",
+            "title": f"{day_label}: Grain Filling – Maintain Nutrition",
+            "detail": ("Adequate N and K during grain filling improves grain weight and quality. "
+                       "Water deficit now reduces 1000-grain weight."),
+            "action": ("Apply foliar KNO₃ (5g/L) if temperature stress. "
+                       "Maintain moderate irrigation. Do not allow soil to dry out.")
+        }
+    }
+    if stage in critical_stages and stress_label in ("Low Stress", "High Stress"):
+        cfg = critical_stages[stage]
+        recs.append({
+            "category": "Growth Stage", "icon": "🌾",
+            **cfg
+        })
+
+    # --- Pest/disease risk triggered by weather ---
+    if climate.get("humidity", 70) > 85 and temp > 26:
+        recs.append({
+            "category": "Disease Alert", "priority": "High", "icon": "🦠",
+            "title": f"{day_label}: High Disease Risk (Humidity {climate.get('humidity',70):.0f}%)",
+            "detail": ("Warm + humid conditions favour Blast, Sheath Blight, and Brown Leaf Spot. "
+                       "Disease cycle is fastest 24–48h after wet weather."),
+            "action": ("Scout fields for lesions. If >5% leaf area affected, apply fungicide "
+                       "(Tricyclazole 18 g/acre for Blast; Hexaconazole for Sheath Blight). "
+                       "Do NOT spray during wind or rain.")
+        })
+
+    # --- Normal / good-day advisory ---
+    if stress_label == "Normal" and not recs:
+        recs.append({
+            "category": "Monitoring", "priority": "Info", "icon": "✅",
+            "title": f"{day_label}: Favorable Growing Conditions",
+            "detail": (f"Temperature {temp:.0f}°C, Rainfall {rain:.0f}mm — within optimal range "
+                       f"for {crop} at {stage} stage."),
+            "action": ("Routine scouting (check for pests, disease). "
+                       "Confirm irrigation schedule for the week. Record field observations.")
+        })
+
+    return recs
+
+
+def calculate_7day_stress_predictions(forecast_7day, crop, days_since_sowing, current_soil=0.30):
+    """
+    Apply ML ensemble to each of the 7 forecast days.
+
+    Uses a simple water-balance model to evolve soil moisture day-by-day
+    from current measured value, then runs RF+GB+ET+rules ensemble for each day.
+    Returns list of per-day dicts with stress prediction and detailed recommendations.
+    """
+    predictions = []
+    soil = float(current_soil)
+    thresholds = CROP_THRESHOLDS.get(crop, DEFAULT_THRESHOLDS)
+    sm_opt_min, _ = thresholds["soil_moisture_optimal"]
+
+    for i, day_wx in enumerate(forecast_7day[:7]):
+        rainfall = float(day_wx.get("rainfall", 0) or 0)
+        et0 = float(day_wx.get("et0", 4) or 4)
+
+        # Simple daily water balance
+        rain_gain = min(0.06, rainfall / 150.0)   # 150mm rain ≈ +6% soil moisture
+        et_loss   = min(0.025, et0 / 200.0)        # ET0 4mm/day ≈ -2% loss
+        soil = max(0.04, min(0.65, soil + rain_gain - et_loss))
+
+        day_climate = {
+            "t2m_C":      float(day_wx.get("temp_mean", 28) or 28),
+            "t_max":      float(day_wx.get("temp_max",  32) or 32),
+            "t_min":      float(day_wx.get("temp_min",  24) or 24),
+            "tp_mm":      rainfall,
+            "wind_speed": float(day_wx.get("wind", 5) or 5),
+            "humidity":   float(day_wx.get("humidity", 70) or 70),
+            "et0":        et0,
+            "sp_hpa":     1013.0,
+            "swvl1":      round(soil, 3),
+            "precip_prob": int(day_wx.get("precip_prob", 20) or 20),
+        }
+
+        future_days = days_since_sowing + i + 1
+        growth_info = get_growth_stage_info(crop, future_days)
+
+        # Run fast ML ensemble (RF + GB + ET + rules)
+        try:
+            X = np.array([[day_climate[f] for f in features]])
+            X_scaled = scaler.transform(X)
+
+            proba_accum = np.zeros(3)
+            total_weight = 0.0
+
+            model_weights = [
+                (rf_model,  "rf",  0.35),
+                (gb_model,  "gb",  0.30),
+                (et_model,  "et",  0.25),
+            ]
+            for mdl, name, w in model_weights:
+                if mdl is not None:
+                    try:
+                        p = mdl.predict_proba(X_scaled)[0]
+                        proba_accum += p * w
+                        total_weight += w
+                    except Exception:
+                        pass
+
+            # Rule-based always contributes
+            rule_proba, _, _ = run_rule_based_prediction(day_climate)
+            rule_w = max(0.10, 1.0 - total_weight)
+            proba_accum += rule_proba * rule_w
+            total_weight += rule_w
+
+            avg_proba = proba_accum / total_weight
+            stress_class = int(np.argmax(avg_proba))
+            stress_conf  = float(avg_proba[stress_class])
+
+        except Exception:
+            rule_proba, stress_class, stress_conf = run_rule_based_prediction(day_climate)
+            avg_proba = rule_proba
+
+        stress_map   = {0: "Normal", 1: "Low Stress", 2: "High Stress"}
+        stress_label = stress_map[stress_class]
+
+        # Lightweight stress scores for this day
+        stress_scores = calculate_comprehensive_stress(crop, day_climate, growth_info)
+
+        # Detailed per-day recommendations
+        daily_recs = generate_daily_recommendations(
+            day=i + 1,
+            date=str(day_wx.get("date", "")),
+            crop=crop,
+            climate=day_climate,
+            stress_label=stress_label,
+            stress_scores=stress_scores,
+            growth_info=growth_info,
+        )
+
+        predictions.append({
+            "day":              i + 1,
+            "date":             str(day_wx.get("date", "")),
+            "weather": {
+                "temp_mean":    round(day_climate["t2m_C"], 1),
+                "temp_max":     round(day_climate["t_max"], 1),
+                "temp_min":     round(day_climate["t_min"], 1),
+                "rainfall":     round(rainfall, 1),
+                "wind":         round(day_climate["wind_speed"], 1),
+                "humidity":     round(day_climate["humidity"]),
+                "precip_prob":  day_climate["precip_prob"],
+                "et0":          round(et0, 1),
+            },
+            "soil_moisture_pct":   round(soil * 100, 1),
+            "stress_prediction":   stress_label,
+            "stress_class":        stress_class,
+            "stress_probability":  round(stress_conf, 3),
+            "stress_probabilities": {
+                "Normal":     round(float(avg_proba[0]), 3),
+                "Low Stress": round(float(avg_proba[1]), 3),
+                "High Stress":round(float(avg_proba[2]), 3),
+            },
+            "stress_scores":     stress_scores,
+            "growth_stage":      growth_info.get("name", "Vegetative"),
+            "recommendations":   daily_recs,
+        })
+
+    return predictions
+
+
+# -----------------------------
+# RESEARCH AI INTEGRATION
+# -----------------------------
+def get_research_ai_insights(climate, crop, stress):
+    """
+    Get advanced Research AI insights to enhance DSS predictions.
+    
+    Integrates:
+    1. TFT Multi-horizon forecasts (1, 3, 7 days)
+    2. Bayesian uncertainty quantification
+    3. Counterfactual explanations ("what to change")
+    4. Knowledge Graph recommendations
+    
+    Returns enhanced analysis or fallback if Research AI unavailable.
+    """
+    if not RESEARCH_AI_AVAILABLE:
+        return {
+            "available": False,
+            "message": "Research AI module not loaded"
+        }
+    
+    try:
+        # Prepare features for Research AI [temp, precip, soil, wind, pressure]
+        features = [
+            climate.get('t2m_C', 30),
+            climate.get('tp_mm', 5),
+            climate.get('swvl1', 0.35),
+            climate.get('wind_speed', 10),
+            climate.get('sp_hpa', 1013)
+        ]
+        
+        conditions = {
+            "temperature": climate.get('t2m_C', 30),
+            "humidity": climate.get('humidity', 70),
+            "precipitation": climate.get('tp_mm', 5),
+            "stress_level": stress.get('overall', 30)
+        }
+        
+        # Run full research analysis
+        result = research_ai.full_research_analysis(
+            features=features,
+            crop=crop.lower(),
+            conditions=conditions
+        )
+        
+        # Extract key insights for DSS integration
+        insights = {
+            "available": True,
+            
+            # Multi-horizon forecasts from TFT
+            "forecasts": _extract_tft_forecasts(result.get("tft_forecast", {})),
+            
+            # Confidence from Bayesian analysis
+            "confidence": _extract_confidence(result.get("uncertainty", {})),
+            
+            # Actionable advice from Counterfactual
+            "actionable_insights": _extract_counterfactuals(result.get("counterfactuals", {})),
+            
+            # Knowledge-based recommendations
+            "knowledge_recommendations": _extract_knowledge(result.get("knowledge_graph", {})),
+            
+            # Summary for quick display
+            "summary": _generate_research_summary(result, stress)
+        }
+        
+        return insights
+        
+    except Exception as e:
+        return {
+            "available": False,
+            "error": str(e),
+            "message": "Research AI analysis failed"
+        }
+
+
+def _extract_tft_forecasts(tft_result):
+    """Extract TFT multi-horizon forecasts"""
+    if not tft_result or "error" in tft_result:
+        return None
+    
+    forecasts = tft_result.get("forecasts", {})
+    return {
+        "day_1": forecasts.get("day_1", {}),
+        "day_3": forecasts.get("day_3", {}),
+        "day_7": forecasts.get("day_7", {}),
+        "attention_interpretation": tft_result.get("attention_weights", {}).get("interpretation", ""),
+        "most_important_features": tft_result.get("variable_importance", {})
+    }
+
+
+def _extract_confidence(uncertainty_result):
+    """Extract Bayesian uncertainty as confidence score"""
+    if not uncertainty_result or "error" in uncertainty_result:
+        return {"score": 75, "level": "Medium"}
+    
+    reliability = uncertainty_result.get("reliability_score", 0.75)
+    confidence_pct = int(reliability * 100)
+    
+    if confidence_pct >= 80:
+        level = "High"
+    elif confidence_pct >= 60:
+        level = "Medium"
+    else:
+        level = "Low"
+    
+    return {
+        "score": confidence_pct,
+        "level": level,
+        "epistemic": uncertainty_result.get("epistemic_uncertainty", 0),
+        "aleatoric": uncertainty_result.get("aleatoric_uncertainty", 0),
+        "explanation": uncertainty_result.get("explanations", {}).get("reliability", "")
+    }
+
+
+def _extract_counterfactuals(cf_result):
+    """Extract actionable insights from counterfactual analysis"""
+    if not cf_result or "error" in cf_result:
+        return []
+    
+    scenarios = cf_result.get("scenarios", [])
+    insights = []
+    
+    for scenario in scenarios[:3]:  # Top 3 scenarios
+        if scenario.get("changes_required"):
+            changes = scenario["changes_required"]
+            for feature, (old_val, new_val) in changes.items():
+                direction = "increase" if new_val > old_val else "decrease"
+                diff = abs(new_val - old_val)
+                
+                insights.append({
+                    "action": f"{direction.capitalize()} {feature}",
+                    "from": round(old_val, 2),
+                    "to": round(new_val, 2),
+                    "change": round(diff, 2),
+                    "result": scenario.get("counterfactual_prediction", "NORMAL"),
+                    "feasibility": scenario.get("feasibility_score", 0.5)
+                })
+    
+    return insights
+
+
+def _extract_knowledge(kg_result):
+    """Extract knowledge graph recommendations"""
+    if not kg_result or "error" in kg_result:
+        return []
+    
+    recommendations = kg_result.get("recommendations", [])
+    knowledge = kg_result.get("knowledge", {})
+    
+    return {
+        "recommendations": recommendations[:5],  # Top 5
+        "related_entities": knowledge.get("related_entities", []),
+        "risk_factors": knowledge.get("risk_factors", [])
+    }
+
+
+def _generate_research_summary(result, stress):
+    """Generate a human-readable summary of research insights"""
+    summary_parts = []
+    
+    # TFT forecast summary
+    tft = result.get("tft_forecast", {})
+    if tft and "forecasts" in tft:
+        day7 = tft["forecasts"].get("day_7", {})
+        if day7:
+            trend = "worsening" if day7.get("stress_probability", 0) > 0.5 else "stable"
+            summary_parts.append(f"7-day outlook: {trend}")
+    
+    # Uncertainty summary
+    uncertainty = result.get("uncertainty", {})
+    if uncertainty and "reliability_score" in uncertainty:
+        rel = uncertainty["reliability_score"]
+        conf_text = "high" if rel > 0.8 else "medium" if rel > 0.5 else "low"
+        summary_parts.append(f"Prediction confidence: {conf_text}")
+    
+    # Counterfactual summary
+    cf = result.get("counterfactuals", {})
+    if cf and "scenarios" in cf:
+        scenarios = cf["scenarios"]
+        if scenarios:
+            best = scenarios[0]
+            if best.get("actionable_advice"):
+                summary_parts.append(best["actionable_advice"])
+    
+    return " | ".join(summary_parts) if summary_parts else "Analysis complete"
+
+
+# -----------------------------
 # MAIN DSS ENGINE
 # -----------------------------
 def run_dss(request_data=None, classifier_data=None):
@@ -2693,7 +3183,14 @@ def run_dss(request_data=None, classifier_data=None):
         
         # Classifier integration
         "classifier_enhanced": classifier_data is not None,
-        "classifier_data": classifier_data
+        "classifier_data": classifier_data,
+        
+        # Research AI Enhanced Analysis
+        "research_ai": get_research_ai_insights(
+            climate=climate,
+            crop=crop,
+            stress=stress
+        )
     }
 
 
@@ -2706,6 +3203,38 @@ def run_dss_with_classifier(request_data, classifier_data):
     Provides enhanced recommendations based on visual crop analysis.
     """
     return run_dss(request_data, classifier_data)
+
+
+def get_weather_for_location(location: str = "Palakkad") -> dict:
+    """
+    Get current weather data for a location for Advisor AI context.
+    Returns realistic weather conditions to be used with the AI Agent.
+    """
+    try:
+        # Fetch weather from fetch_weather function
+        weather = fetch_weather(location)
+        
+        return {
+            "temperature": weather.get("t2m_C", 30),
+            "soil_moisture": weather.get("swvl1", 0.35),
+            "rainfall": weather.get("tp_mm", 5),
+            "humidity": weather.get("humidity", 70),
+            "wind_speed": weather.get("wind_speed", 5),
+            "pressure": weather.get("pressure", 1013),
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        print(f"Error fetching weather: {e}")
+        # Return default conditions
+        return {
+            "temperature": 30,
+            "soil_moisture": 0.35,
+            "rainfall": 5,
+            "humidity": 70,
+            "wind_speed": 5,
+            "pressure": 1013,
+            "timestamp": datetime.now().isoformat()
+        }
 
 
 # Test function

@@ -46,3 +46,21 @@ Thumbs.db
 *.pem
 *.key
 secrets.json
+
+# Generated reports and submission artifacts
+Final_Report/
+paper_assets/
+research_analysis/reports/
+research_analysis/data/ERA5/
+research_analysis/data/extended/
+research_analysis/data/external_india/
+research_analysis/figures/mtech_nb/
+research_analysis/figures/mtech_notebook/
+research_analysis/figures/production/
+research_analysis/CB.SC.P2CSE24019_*.pptx
+research_analysis/PPT.pptx
+COLLEGE_SUBMISSION_REPORT.docx
+*.pptx
+*.docx
+*.pdf
+~$*

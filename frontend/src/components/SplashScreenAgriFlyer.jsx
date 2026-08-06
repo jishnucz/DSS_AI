@@ -1,56 +1,23 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
-  
-  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-  @keyframes slideUp { from{opacity:0;transform:translateY(25px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes scaleIn { from{opacity:0;transform:scale(0.85)} to{opacity:1;transform:scale(1)} }
-  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-  @keyframes shine { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
-  @keyframes bounceIn { 0%{opacity:0;transform:scale(0.3)} 50%{transform:scale(1.05)} 70%{transform:scale(0.95)} 100%{opacity:1;transform:scale(1)} }
-  @keyframes gradientMove { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-  @keyframes leafFloat { 0%,100%{transform:translateY(0) rotate(0deg)} 25%{transform:translateY(-6px) rotate(1deg)} 75%{transform:translateY(4px) rotate(-1deg)} }
-  @keyframes glowPulse { 0%,100%{box-shadow:0 0 25px rgba(34,197,94,0.25)} 50%{box-shadow:0 0 50px rgba(34,197,94,0.4)} }
-  
-  .agriflyer-splash {
-    position: fixed;
-    inset: 0;
-    z-index: 10000;
-    font-family: 'Poppins', sans-serif;
-    overflow: hidden;
-  }
-  
-  .agriflyer-splash .stat-card {
-    backdrop-filter: blur(16px);
-    animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-    opacity: 0;
-  }
-  
-  .agriflyer-splash .feature-icon {
-    animation: leafFloat 4s ease-in-out infinite;
-  }
-  
-  .agriflyer-splash .logo-circle {
-    animation: glowPulse 2.5s ease-in-out infinite;
-  }
-  
-  @media (max-width: 768px) {
-    .agriflyer-splash .features-grid {
-      grid-template-columns: repeat(2, 1fr) !important;
-    }
-    .agriflyer-splash .stats-row {
-      gap: 8px !important;
-    }
-  }
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  @keyframes sp-fadeIn   { from{opacity:0} to{opacity:1} }
+  @keyframes sp-slideUp  { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes sp-scaleIn  { from{opacity:0;transform:scale(0.7)} to{opacity:1;transform:scale(1)} }
+  @keyframes sp-glow     { 0%,100%{box-shadow:0 0 30px rgba(34,197,94,0.3),0 0 60px rgba(34,197,94,0.1)} 50%{box-shadow:0 0 50px rgba(34,197,94,0.5),0 0 100px rgba(34,197,94,0.2)} }
+  @keyframes sp-ring     { 0%{transform:scale(0.6);opacity:0.8} 100%{transform:scale(2.2);opacity:0} }
+  @keyframes sp-shimmer  { 0%{background-position:-400% 0} 100%{background-position:400% 0} }
+  @keyframes sp-blink    { 0%,100%{opacity:1} 50%{opacity:0} }
+  @keyframes sp-float    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  @keyframes sp-fadeOut  { 0%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(1.03)} }
+  @keyframes sp-popIn    { 0%{opacity:0;transform:scale(0.5) translateY(10px)} 70%{transform:scale(1.05) translateY(-2px)} 100%{opacity:1;transform:scale(1) translateY(0)} }
+  @keyframes sp-gradMove { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+  @keyframes sp-orbFloat { 0%,100%{transform:translateY(0) translateX(0)} 33%{transform:translateY(-20px) translateX(10px)} 66%{transform:translateY(10px) translateX(-10px)} }
 `;
 
-// Premium agriculture images
-const IMAGES = {
-  hero: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1920&q=85",
-};
-
-function injectCSS(id, css) {
+function inject(id, css) {
   if (!document.querySelector(`style[data-id="${id}"]`)) {
     const el = document.createElement("style");
     el.setAttribute("data-id", id);
@@ -59,425 +26,299 @@ function injectCSS(id, css) {
   }
 }
 
+const ACCURACY_LINES = [
+  { label: "LightGBM (best individual)", value: 86.4, color: "#22c55e", delay: 800 },
+  { label: "Stacking Ensemble (final)",  value: 86.4, color: "#6366f1", delay: 1100 },
+  { label: "BiLSTM (best DL)",           value: 84.9, color: "#a78bfa", delay: 1400 },
+];
+
+const LOAD_STEPS = [
+  { text: "Initializing ERA5 climate engine…", at: 0 },
+  { text: "Loading 25-feature ensemble pipeline…", at: 22 },
+  { text: "Calibrating CCSI stress thresholds…", at: 45 },
+  { text: "Syncing 5-taluk geographic data…", at: 68 },
+  { text: "Activating SHAP explainability…", at: 85 },
+  { text: "System ready.", at: 98 },
+];
+
 export default function SplashScreenAgriFlyer({ onComplete }) {
+  const canvasRef = useRef(null);
   const [progress, setProgress] = useState(0);
   const [phase, setPhase] = useState(0);
-  const [showContent, setShowContent] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
+  const [exiting, setExiting] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const [accuracyShown, setAccuracyShown] = useState([false, false, false]);
+
+  inject("sp-css", CSS);
 
   useEffect(() => {
-    injectCSS("agriflyer-splash-css", CSS);
-    
     const img = new Image();
-    img.onload = () => setImageLoaded(true);
-    img.src = IMAGES.hero;
+    img.onload = () => setImgLoaded(true);
+    img.src = "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1920&q=70";
+
+    const t1 = setTimeout(() => setPhase(1), 150);
+    const t2 = setTimeout(() => setPhase(2), 700);
+    const t3 = setTimeout(() => setPhase(3), 1300);
+
+    ACCURACY_LINES.forEach((_, i) => {
+      setTimeout(() => setAccuracyShown(p => { const n=[...p]; n[i]=true; return n; }), ACCURACY_LINES[i].delay);
+    });
 
     const progressInterval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(progressInterval);
-          return 100;
-        }
-        return prev + 2;
+      setProgress(p => {
+        if (p >= 100) { clearInterval(progressInterval); return 100; }
+        const bump = p < 40 ? 3 : p < 75 ? 2 : p < 92 ? 1.2 : 0.5;
+        return Math.min(100, p + bump + Math.random() * 0.8);
       });
     }, 55);
 
-    setTimeout(() => setPhase(1), 200);
-    setTimeout(() => setShowContent(true), 400);
-    setTimeout(() => setPhase(2), 1200);
-    setTimeout(() => setPhase(3), 1800);
-    setTimeout(() => {
-      if (onComplete) onComplete();
-    }, 3500);
+    const exitTimer = setTimeout(() => {
+      setExiting(true);
+      setTimeout(() => onComplete?.(), 700);
+    }, 3600);
 
-    return () => clearInterval(progressInterval);
+    return () => {
+      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
+      clearTimeout(exitTimer); clearInterval(progressInterval);
+    };
   }, [onComplete]);
 
-  const features = [
-    { icon: "🌾", title: "Crop Intelligence", desc: "AI analysis" },
-    { icon: "🌤️", title: "Weather Insights", desc: "Forecasting" },
-    { icon: "📊", title: "Smart Analytics", desc: "Data-driven" },
-    { icon: "🌱", title: "Growth Tracking", desc: "Monitoring" },
-  ];
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let raf;
 
-  const stats = [
-    { value: "13", label: "Taluks", icon: "📍" },
-    { value: "7+", label: "Crops", icon: "🌿" },
-    { value: "AI", label: "Powered", icon: "🤖" },
-    { value: "24/7", label: "Active", icon: "⏰" },
-  ];
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener("resize", resize);
 
-  const loadingMessages = [
-    "Initializing systems...",
-    "Loading crop database...",
-    "Preparing AI models...",
-    "Almost ready..."
-  ];
+    const pts = Array.from({ length: 60 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.6,
+      vy: (Math.random() - 0.5) * 0.6,
+      r: Math.random() * 1.5 + 0.5,
+    }));
 
-  const currentMessage = loadingMessages[Math.min(Math.floor(progress / 25), 3)];
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      pts.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
 
-  const styles = {
-    container: {
-      position: "fixed",
-      inset: 0,
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      overflow: "hidden",
-      background: "linear-gradient(145deg, #071018 0%, #0d1f12 50%, #0a1520 100%)",
-    },
-    
-    bgImage: {
-      position: "absolute",
-      inset: 0,
-      backgroundImage: `url(${IMAGES.hero})`,
-      backgroundSize: "cover",
-      backgroundPosition: "center 40%",
-      opacity: imageLoaded ? 0.3 : 0,
-      transition: "opacity 1.5s ease",
-      filter: "saturate(1.3) brightness(0.9)",
-    },
-    
-    overlay: {
-      position: "absolute",
-      inset: 0,
-      background: `linear-gradient(180deg, 
-        rgba(7, 16, 24, 0.9) 0%, 
-        rgba(13, 31, 18, 0.8) 40%,
-        rgba(10, 21, 32, 0.85) 70%,
-        rgba(7, 16, 24, 0.95) 100%
-      )`,
-    },
-    
-    topGlow: {
-      position: "absolute",
-      top: "-20%",
-      left: "50%",
-      transform: "translateX(-50%)",
-      width: "100%",
-      height: "50%",
-      background: "radial-gradient(ellipse at center, rgba(34,197,94,0.1) 0%, transparent 65%)",
-      pointerEvents: "none",
-    },
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(34,197,94,0.45)";
+        ctx.fill();
 
-    content: {
-      position: "relative",
-      zIndex: 10,
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: "20px",
-      maxWidth: "850px",
-      width: "100%",
-      opacity: showContent ? 1 : 0,
-      transform: showContent ? "translateY(0)" : "translateY(15px)",
-      transition: "all 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
-    },
+        pts.forEach(q => {
+          const dx = p.x - q.x, dy = p.y - q.y;
+          const d = Math.sqrt(dx * dx + dy * dy);
+          if (d < 140) {
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(q.x, q.y);
+            ctx.strokeStyle = `rgba(34,197,94,${0.12 * (1 - d / 140)})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        });
+      });
+      raf = requestAnimationFrame(draw);
+    };
+    draw();
+    return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", resize); };
+  }, []);
 
-    logoSection: {
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      marginBottom: "28px",
-    },
-    
-    logoCircle: {
-      width: "90px",
-      height: "90px",
-      borderRadius: "50%",
-      background: "linear-gradient(145deg, #22c55e 0%, #16a34a 70%, #15803d 100%)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: "2.5rem",
-      boxShadow: "0 12px 40px rgba(34, 197, 94, 0.35), inset 0 -3px 12px rgba(0,0,0,0.15)",
-      marginBottom: "18px",
-      animation: phase >= 1 ? "scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards" : "none",
-      opacity: phase >= 1 ? 1 : 0,
-    },
-    
-    brandName: {
-      fontSize: "2.2rem",
-      fontWeight: "700",
-      color: "#fff",
-      letterSpacing: "-0.3px",
-      marginBottom: "6px",
-      textAlign: "center",
-      animation: phase >= 1 ? "slideUp 0.4s ease 0.1s forwards" : "none",
-      opacity: phase >= 1 ? 1 : 0,
-      textShadow: "0 2px 15px rgba(0,0,0,0.25)",
-    },
-    
-    brandNameGreen: {
-      background: "linear-gradient(135deg, #4ade80 0%, #22c55e 60%, #16a34a 100%)",
-      WebkitBackgroundClip: "text",
-      WebkitTextFillColor: "transparent",
-      backgroundClip: "text",
-    },
-    
-    tagline: {
-      fontSize: "0.95rem",
-      color: "rgba(255,255,255,0.6)",
-      fontWeight: "400",
-      letterSpacing: "0.2px",
-      textAlign: "center",
-      animation: phase >= 1 ? "slideUp 0.4s ease 0.2s forwards" : "none",
-      opacity: phase >= 1 ? 1 : 0,
-    },
-
-    statsRow: {
-      display: "flex",
-      gap: "10px",
-      justifyContent: "center",
-      flexWrap: "wrap",
-      marginBottom: "24px",
-    },
-    
-    statCard: {
-      background: "rgba(255,255,255,0.04)",
-      backdropFilter: "blur(12px)",
-      border: "1px solid rgba(255,255,255,0.07)",
-      borderRadius: "12px",
-      padding: "12px 18px",
-      textAlign: "center",
-      minWidth: "75px",
-    },
-    
-    statIcon: {
-      fontSize: "1.1rem",
-      marginBottom: "4px",
-    },
-    
-    statValue: {
-      fontSize: "1.3rem",
-      fontWeight: "700",
-      color: "#4ade80",
-      marginBottom: "1px",
-    },
-    
-    statLabel: {
-      fontSize: "0.6rem",
-      color: "rgba(255,255,255,0.5)",
-      textTransform: "uppercase",
-      letterSpacing: "0.6px",
-      fontWeight: "500",
-    },
-
-    featuresGrid: {
-      display: "grid",
-      gridTemplateColumns: "repeat(4, 1fr)",
-      gap: "10px",
-      width: "100%",
-      maxWidth: "650px",
-      marginBottom: "30px",
-      opacity: phase >= 2 ? 1 : 0,
-      transform: phase >= 2 ? "translateY(0)" : "translateY(12px)",
-      transition: "all 0.5s ease",
-    },
-    
-    featureCard: {
-      background: "rgba(255,255,255,0.025)",
-      border: "1px solid rgba(255,255,255,0.05)",
-      borderRadius: "12px",
-      padding: "16px 10px",
-      textAlign: "center",
-    },
-    
-    featureIcon: {
-      fontSize: "1.4rem",
-      marginBottom: "6px",
-      display: "block",
-    },
-    
-    featureTitle: {
-      fontSize: "0.72rem",
-      fontWeight: "600",
-      color: "#fff",
-      marginBottom: "2px",
-    },
-    
-    featureDesc: {
-      fontSize: "0.62rem",
-      color: "rgba(255,255,255,0.45)",
-    },
-
-    progressSection: {
-      width: "100%",
-      maxWidth: "420px",
-      opacity: phase >= 3 ? 1 : 0,
-      transform: phase >= 3 ? "translateY(0)" : "translateY(10px)",
-      transition: "all 0.4s ease",
-    },
-    
-    progressHeader: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: "10px",
-    },
-    
-    progressLabel: {
-      fontSize: "0.75rem",
-      color: "rgba(255,255,255,0.6)",
-      fontWeight: "500",
-    },
-    
-    progressPercent: {
-      fontWeight: "600",
-      color: "#4ade80",
-      fontSize: "0.85rem",
-    },
-    
-    progressTrack: {
-      height: "6px",
-      background: "rgba(255,255,255,0.08)",
-      borderRadius: "100px",
-      overflow: "hidden",
-    },
-    
-    progressBar: {
-      height: "100%",
-      background: "linear-gradient(90deg, #16a34a, #22c55e, #4ade80)",
-      backgroundSize: "200% 100%",
-      animation: "gradientMove 1.5s ease infinite",
-      borderRadius: "100px",
-      width: `${progress}%`,
-      transition: "width 0.2s ease",
-      position: "relative",
-      overflow: "hidden",
-    },
-    
-    progressShine: {
-      position: "absolute",
-      top: 0,
-      width: "50%",
-      height: "100%",
-      background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)",
-      animation: "shine 1.2s ease infinite",
-    },
-    
-    loadingText: {
-      marginTop: "12px",
-      fontSize: "0.75rem",
-      color: "rgba(255,255,255,0.45)",
-      textAlign: "center",
-      fontWeight: "400",
-      marginBottom: "60px", // Space for bottom badge
-    },
-
-    bottomBrand: {
-      position: "fixed",
-      bottom: "24px",
-      left: "50%",
-      transform: "translateX(-50%)",
-      zIndex: 15,
-    },
-    
-    palakkadBadge: {
-      background: "rgba(34,197,94,0.12)",
-      border: "1px solid rgba(34,197,94,0.2)",
-      padding: "8px 16px",
-      borderRadius: "100px",
-      fontSize: "0.7rem",
-      fontWeight: "500",
-      color: "rgba(74,222,128,0.85)",
-      letterSpacing: "0.3px",
-      display: "flex",
-      alignItems: "center",
-      gap: "6px",
-    },
-
-    decorativeCircle1: {
-      position: "absolute",
-      top: "8%",
-      right: "8%",
-      width: "200px",
-      height: "200px",
-      border: "1px solid rgba(34,197,94,0.06)",
-      borderRadius: "50%",
-      opacity: 0.4,
-    },
-    
-    decorativeCircle2: {
-      position: "absolute",
-      bottom: "12%",
-      left: "5%",
-      width: "150px",
-      height: "150px",
-      border: "1px solid rgba(34,197,94,0.05)",
-      borderRadius: "50%",
-      opacity: 0.4,
-    },
-  };
+  const loadMsg = LOAD_STEPS.slice().reverse().find(s => progress >= s.at)?.text ?? LOAD_STEPS[0].text;
 
   return (
-    <div className="agriflyer-splash" style={styles.container}>
-      <div style={styles.bgImage} />
-      <div style={styles.overlay} />
-      <div style={styles.topGlow} />
-      <div style={styles.decorativeCircle1} />
-      <div style={styles.decorativeCircle2} />
+    <div style={{ ...S.root, animation: exiting ? "sp-fadeOut 0.7s ease forwards" : undefined }}>
+      {/* Neural net canvas */}
+      <canvas ref={canvasRef} style={S.canvas} />
 
-      <div style={styles.content}>
-        <div style={styles.logoSection}>
-          <div className="logo-circle" style={styles.logoCircle}>🌾</div>
-          <h1 style={styles.brandName}>
-            <span style={styles.brandNameGreen}>AgriDSS</span>
-            <span> Intelligence</span>
-          </h1>
-          <p style={styles.tagline}>
-            Smart Agriculture Decision Support System
-          </p>
+      {/* Background image */}
+      <div style={{ ...S.bgImg, backgroundImage: "url(https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1920&q=70)", opacity: imgLoaded ? 0.18 : 0 }} />
+
+      {/* Gradient overlays */}
+      <div style={S.overlay} />
+      <div style={S.radialGlow} />
+
+      {/* Decorative orbs */}
+      <div style={{ ...S.orb, top: "10%", right: "12%", width: 180, height: 180, background: "radial-gradient(circle,rgba(34,197,94,0.12),transparent 70%)", animation: "sp-orbFloat 8s ease-in-out infinite" }} />
+      <div style={{ ...S.orb, bottom: "15%", left: "8%", width: 120, height: 120, background: "radial-gradient(circle,rgba(99,102,241,0.1),transparent 70%)", animation: "sp-orbFloat 10s ease-in-out infinite 2s" }} />
+
+      {/* Grid */}
+      <div style={S.grid} />
+
+      <div style={{ ...S.content, opacity: phase >= 1 ? 1 : 0, transform: phase >= 1 ? "none" : "translateY(16px)", transition: "all 0.7s cubic-bezier(0.16,1,0.3,1)" }}>
+
+        {/* Logo */}
+        <div style={S.logoWrap}>
+          {[0, 1, 2].map(i => (
+            <div key={i} style={{ ...S.ring, animationDelay: `${i * 0.5}s`, animation: phase >= 1 ? `sp-ring 2.5s ease-out infinite ${i * 0.5}s` : "none" }} />
+          ))}
+          <div style={{ ...S.logoCircle, animation: phase >= 1 ? "sp-glow 2.5s ease-in-out infinite" : "none" }}>
+            <span style={S.logoEmoji}>🌾</span>
+          </div>
         </div>
 
-        <div className="stats-row" style={styles.statsRow}>
-          {stats.map((stat, i) => (
-            <div
-              key={i}
-              className="stat-card"
-              style={{ ...styles.statCard, animationDelay: `${0.6 + i * 0.1}s` }}
-            >
-              <div style={styles.statIcon}>{stat.icon}</div>
-              <div style={styles.statValue}>{stat.value}</div>
-              <div style={styles.statLabel}>{stat.label}</div>
+        {/* Brand */}
+        <div style={{ ...S.brand, animation: phase >= 1 ? "sp-slideUp 0.6s ease 0.15s both" : "none" }}>
+          <span style={S.brandGreen}>AgriDSS</span>
+          <span style={S.brandWhite}> Intelligence</span>
+        </div>
+        <div style={{ ...S.tagline, animation: phase >= 1 ? "sp-slideUp 0.6s ease 0.25s both" : "none" }}>
+          AI-Powered Crop Stress Forecasting • Palakkad, Kerala
+        </div>
+
+        {/* Accuracy panel */}
+        <div style={{ ...S.accPanel, opacity: phase >= 2 ? 1 : 0, transform: phase >= 2 ? "none" : "translateY(14px)", transition: "all 0.5s ease 0.1s" }}>
+          <div style={S.accHeader}>
+            <span style={S.accHeaderDot} />
+            <span style={S.accHeaderText}>VERIFIED RESEARCH RESULTS</span>
+            <span style={S.accHeaderDot} />
+          </div>
+          {ACCURACY_LINES.map((l, i) => (
+            <div key={i} style={{ ...S.accRow, animation: accuracyShown[i] ? "sp-slideUp 0.4s ease both" : "none", opacity: accuracyShown[i] ? 1 : 0 }}>
+              <span style={S.accLabel}>{l.label}</span>
+              <div style={S.accBarWrap}>
+                <div style={{ ...S.accBar, width: accuracyShown[i] ? `${l.value}%` : "0%", background: `linear-gradient(90deg,${l.color},${l.color}cc)`, transition: "width 0.8s cubic-bezier(0.4,0,0.2,1) 0.1s" }} />
+              </div>
+              <span style={{ ...S.accValue, color: l.color }}>{l.value}%</span>
             </div>
           ))}
         </div>
 
-        <div className="features-grid" style={styles.featuresGrid}>
-          {features.map((feat, i) => (
-            <div key={i} style={styles.featureCard}>
-              <span className="feature-icon" style={{ ...styles.featureIcon, animationDelay: `${i * 0.15}s` }}>
-                {feat.icon}
-              </span>
-              <div style={styles.featureTitle}>{feat.title}</div>
-              <div style={styles.featureDesc}>{feat.desc}</div>
-            </div>
-          ))}
-        </div>
-
-        <div style={styles.progressSection}>
-          <div style={styles.progressHeader}>
-            <span style={styles.progressLabel}>Loading Application</span>
-            <span style={styles.progressPercent}>{progress}%</span>
+        {/* Progress */}
+        <div style={{ ...S.progressWrap, opacity: phase >= 3 ? 1 : 0, transition: "opacity 0.4s ease" }}>
+          <div style={S.progressMeta}>
+            <span style={S.loadMsg}>{loadMsg}</span>
+            <span style={S.loadPct}>{Math.round(Math.min(100, progress))}%</span>
           </div>
-          <div style={styles.progressTrack}>
-            <div style={styles.progressBar}>
-              <div style={styles.progressShine} />
+          <div style={S.track}>
+            <div style={{ ...S.fill, width: `${Math.min(100, progress)}%` }}>
+              <div style={S.fillShine} />
             </div>
           </div>
-          <div style={styles.loadingText}>{currentMessage}</div>
         </div>
-      </div>
 
-      <div style={styles.bottomBrand}>
-        <span style={styles.palakkadBadge}>
-          <span>�</span>
-          <span>ERA5 Climate Intelligence • M.Tech Research</span>
-        </span>
+        {/* Bottom badge */}
+        <div style={{ ...S.badge, animation: phase >= 2 ? "sp-fadeIn 0.5s ease 0.6s both" : "none", opacity: phase >= 2 ? 1 : 0 }}>
+          <span>🎓 M.Tech Research 2026</span>
+          <span style={S.badgeDivider}>·</span>
+          <span>ERA5 • 2005–2026</span>
+          <span style={S.badgeDivider}>·</span>
+          <span>21 Years Climate Data</span>
+        </div>
       </div>
     </div>
   );
 }
+
+const S = {
+  root: {
+    position: "fixed", inset: 0, zIndex: 10000, overflow: "hidden",
+    background: "#030a0f",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    fontFamily: "'Poppins', sans-serif",
+  },
+  canvas: { position: "absolute", inset: 0, opacity: 0.6 },
+  bgImg: {
+    position: "absolute", inset: 0,
+    backgroundSize: "cover", backgroundPosition: "center 30%",
+    transition: "opacity 2s ease", filter: "saturate(0.8)",
+  },
+  overlay: {
+    position: "absolute", inset: 0,
+    background: "linear-gradient(180deg,rgba(3,10,15,0.85) 0%,rgba(3,10,15,0.7) 50%,rgba(3,10,15,0.92) 100%)",
+  },
+  radialGlow: {
+    position: "absolute", top: "20%", left: "50%", transform: "translateX(-50%)",
+    width: "70%", height: "60%",
+    background: "radial-gradient(ellipse at center,rgba(34,197,94,0.06) 0%,transparent 70%)",
+    pointerEvents: "none",
+  },
+  grid: {
+    position: "absolute", inset: 0,
+    backgroundImage: "linear-gradient(rgba(34,197,94,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(34,197,94,0.025) 1px,transparent 1px)",
+    backgroundSize: "60px 60px",
+  },
+  orb: { position: "absolute", borderRadius: "50%", pointerEvents: "none" },
+
+  content: {
+    position: "relative", zIndex: 10,
+    display: "flex", flexDirection: "column", alignItems: "center",
+    gap: 0, padding: "24px 20px", maxWidth: 560, width: "100%",
+    transition: "all 0.7s ease",
+  },
+
+  // Logo
+  logoWrap: { position: "relative", width: 120, height: 120, marginBottom: 24 },
+  ring: {
+    position: "absolute", inset: 0,
+    border: "2px solid rgba(34,197,94,0.4)", borderRadius: "50%",
+  },
+  logoCircle: {
+    position: "absolute", inset: 18,
+    borderRadius: "50%",
+    background: "linear-gradient(135deg,rgba(34,197,94,0.25),rgba(3,10,15,0.9))",
+    border: "2px solid rgba(34,197,94,0.5)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+  },
+  logoEmoji: { fontSize: 40, filter: "drop-shadow(0 0 16px rgba(34,197,94,0.8))" },
+
+  brand: { fontSize: "2rem", fontWeight: 800, marginBottom: 8, letterSpacing: "-0.5px" },
+  brandGreen: { background: "linear-gradient(135deg,#4ade80,#22c55e)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" },
+  brandWhite: { color: "#fff" },
+  tagline: { fontSize: "0.8rem", color: "rgba(255,255,255,0.5)", letterSpacing: "0.05em", marginBottom: 28, textAlign: "center" },
+
+  // Accuracy panel
+  accPanel: {
+    width: "100%", marginBottom: 24,
+    background: "rgba(255,255,255,0.025)", backdropFilter: "blur(12px)",
+    border: "1px solid rgba(34,197,94,0.12)", borderRadius: 16,
+    padding: "18px 22px",
+  },
+  accHeader: { display: "flex", alignItems: "center", gap: 10, marginBottom: 14, justifyContent: "center" },
+  accHeaderDot: { flex: 1, height: 1, background: "rgba(34,197,94,0.2)" },
+  accHeaderText: { fontSize: "0.62rem", color: "#4ade80", fontWeight: 600, letterSpacing: "0.12em", fontFamily: "'JetBrains Mono',monospace", whiteSpace: "nowrap" },
+  accRow: { display: "flex", alignItems: "center", gap: 10, marginBottom: 10 },
+  accLabel: { fontSize: "0.72rem", color: "rgba(255,255,255,0.6)", width: 180, flexShrink: 0, fontFamily: "'JetBrains Mono',monospace" },
+  accBarWrap: { flex: 1, height: 4, background: "rgba(255,255,255,0.07)", borderRadius: 4, overflow: "hidden" },
+  accBar: { height: "100%", borderRadius: 4, boxShadow: "0 0 8px currentColor" },
+  accValue: { fontSize: "0.78rem", fontWeight: 700, width: 40, textAlign: "right", fontFamily: "'JetBrains Mono',monospace" },
+
+  // Progress
+  progressWrap: { width: "100%", marginBottom: 20 },
+  progressMeta: { display: "flex", justifyContent: "space-between", marginBottom: 8 },
+  loadMsg: { fontSize: "0.72rem", color: "rgba(255,255,255,0.45)", fontFamily: "'JetBrains Mono',monospace" },
+  loadPct: { fontSize: "0.8rem", fontWeight: 700, color: "#22c55e", fontFamily: "'JetBrains Mono',monospace" },
+  track: { height: 5, background: "rgba(255,255,255,0.07)", borderRadius: 5, overflow: "hidden" },
+  fill: {
+    height: "100%", borderRadius: 5,
+    background: "linear-gradient(90deg,#16a34a,#22c55e,#4ade80)",
+    backgroundSize: "200% 100%",
+    animation: "sp-gradMove 1.5s ease infinite",
+    boxShadow: "0 0 12px rgba(34,197,94,0.5)",
+    position: "relative", transition: "width 0.15s ease",
+  },
+  fillShine: {
+    position: "absolute", inset: 0,
+    background: "linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent)",
+    animation: "sp-shimmer 1.5s linear infinite",
+  },
+
+  badge: {
+    display: "flex", alignItems: "center", gap: 10,
+    background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.15)",
+    borderRadius: 100, padding: "8px 18px",
+    fontSize: "0.68rem", color: "rgba(255,255,255,0.55)", fontWeight: 500,
+  },
+  badgeDivider: { color: "rgba(34,197,94,0.4)" },
+};

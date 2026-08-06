@@ -1,10 +1,28 @@
 /**
- * 🔬 Model Comparison Panel
- * Shows predictions from ALL 8 research-validated ML models
- * From Cell 23 of AI_ML_Analysis_Enhanced_v2_FIXED.ipynb
+ * Model Comparison Panel
+ * Shows live predictions from all 6 + ensemble models from
+ * Palakkad_Ensemble_Forecasting.ipynb.
  */
 
 import { useState, useEffect } from "react";
+import {
+  Lightbulb, Zap, TreeDeciduous, Brain, Bot, ArrowLeftRight, Target,
+  FlaskConical, BarChart3, AlertCircle, CheckCircle2, XCircle, ChevronDown,
+} from "lucide-react";
+
+// Map model name to its icon component (used by fallback + live API responses)
+const MODEL_ICONS = {
+  "LightGBM":            Lightbulb,
+  "BiLSTM (attn)":       ArrowLeftRight,
+  "BiLSTM":              ArrowLeftRight,
+  "Random Forest":       TreeDeciduous,
+  "RandomForest":        TreeDeciduous,
+  "GRU":                 Brain,
+  "XGBoost":             Zap,
+  "PatchTST":            Bot,
+  "Stacking Ensemble":   Target,
+};
+const iconFor = (name) => MODEL_ICONS[name] || Bot;
 
 const CSS = `
   @keyframes slideInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -43,24 +61,25 @@ function ModelComparisonPanel({ features }) {
     pressure: 1013
   };
   
-  // Fallback data when API is unavailable
+  // Fallback data — test-set accuracies from Palakkad_Ensemble_Forecasting.ipynb
+  // Trained 1984-2013, validated 2013-2020, tested 2020-2026 (11,582 sequences)
   const fallbackData = {
     consensus: {
       prediction: "NORMAL",
-      confidence: 0.82,
-      agreement: "7/8 models agree"
+      confidence: 0.86,
+      agreement: "6/6 models agree",
+      strength: 1.0
     },
     models: [
-      { name: "Voting Ensemble", icon: "🏆", prediction: "NORMAL", confidence: 0.883, research_accuracy: 0.883 },
-      { name: "LSTM", icon: "🧠", prediction: "NORMAL", confidence: 0.874, research_accuracy: 0.874 },
-      { name: "Random Forest", icon: "🌲", prediction: "NORMAL", confidence: 0.852, research_accuracy: 0.852 },
-      { name: "Extra Trees", icon: "🌳", prediction: "NORMAL", confidence: 0.846, research_accuracy: 0.846 },
-      { name: "Gradient Boosting", icon: "📈", prediction: "NORMAL", confidence: 0.838, research_accuracy: 0.838 },
-      { name: "MLP Neural Net", icon: "🔮", prediction: "NORMAL", confidence: 0.821, research_accuracy: 0.821 },
-      { name: "SVM", icon: "📊", prediction: "LOW STRESS", confidence: 0.815, research_accuracy: 0.815 },
-      { name: "AdaBoost", icon: "🚀", prediction: "NORMAL", confidence: 0.793, research_accuracy: 0.793 }
+      { name: "LightGBM",          prediction: "NORMAL", confidence: 0.864, research_accuracy: 0.8639, agrees_with_consensus: true, color: "#16a34a" },
+      { name: "BiLSTM (attn)",     prediction: "NORMAL", confidence: 0.849, research_accuracy: 0.8493, agrees_with_consensus: true, color: "#15803d" },
+      { name: "Random Forest",     prediction: "NORMAL", confidence: 0.844, research_accuracy: 0.8442, agrees_with_consensus: true, color: "#166534" },
+      { name: "GRU",               prediction: "NORMAL", confidence: 0.844, research_accuracy: 0.8436, agrees_with_consensus: true, color: "#22c55e" },
+      { name: "XGBoost",           prediction: "NORMAL", confidence: 0.841, research_accuracy: 0.8410, agrees_with_consensus: true, color: "#4ade80" },
+      { name: "PatchTST",          prediction: "NORMAL", confidence: 0.815, research_accuracy: 0.8147, agrees_with_consensus: true, color: "#86efac" },
+      { name: "Stacking Ensemble", prediction: "NORMAL", confidence: 0.864, research_accuracy: 0.8637, agrees_with_consensus: true, color: "#6366f1" },
     ],
-    research_note: "Based on M.Tech research with 140K+ ERA5 observations"
+    research_note: "Stacking ensemble: 86.37% test acc / 86.51 F1 — beats soft-voting (85.88%) by +0.49%. CCSI tercile labels, 20+5 features. Backend live inference: LightGBM + XGBoost (60/40)."
   };
   
   const f = features || defaultFeatures;
@@ -128,7 +147,7 @@ function ModelComparisonPanel({ features }) {
     return (
       <div style={styles.container}>
         <div style={styles.errorState}>
-          <span style={styles.errorIcon}>⚠️</span>
+          <AlertCircle size={32} color="#ef4444" strokeWidth={2.2} style={{ marginBottom: 6 }} />
           <p style={styles.errorText}>{error}</p>
           <button onClick={fetchComparison} style={styles.retryButton}>Retry</button>
         </div>
@@ -146,15 +165,15 @@ function ModelComparisonPanel({ features }) {
       {/* Header */}
       <div style={styles.header}>
         <div style={styles.titleSection}>
-          <span style={styles.icon}>🔬</span>
+          <FlaskConical size={26} strokeWidth={2.2} color="#22c55e" />
           <div>
             <h3 style={styles.title}>Model Comparison</h3>
-            <p style={styles.subtitle}>8 Research-Validated ML Models</p>
+            <p style={styles.subtitle}>6 + Stacking ensemble · Trained 1984-2026</p>
           </div>
         </div>
         <div style={styles.badge}>
-          <span style={styles.badgeIcon}>📊</span>
-          <span style={styles.badgeText}>Cell 23</span>
+          <BarChart3 size={14} strokeWidth={2.4} />
+          <span style={styles.badgeText}>Ensemble v3</span>
         </div>
       </div>
       
@@ -173,7 +192,9 @@ function ModelComparisonPanel({ features }) {
             borderColor: getStressColor(consensus.prediction)
           }}>
             <span style={{ color: getStressColor(consensus.prediction), fontWeight: 700 }}>
-              {consensus.agreeing_models}/{consensus.total_models} models agree
+              {consensus.agreeing_models != null
+                ? `${consensus.agreeing_models}/${consensus.total_models} models agree`
+                : consensus.agreement}
             </span>
           </div>
         </div>
@@ -188,7 +209,7 @@ function ModelComparisonPanel({ features }) {
           <div style={styles.consensusConfidence}>
             <div style={styles.confidenceLabel}>Weighted Confidence</div>
             <div style={styles.confidenceValue}>
-              {(consensus.weighted_confidence * 100).toFixed(1)}%
+              {((consensus.weighted_confidence ?? consensus.confidence) * 100).toFixed(1)}%
             </div>
           </div>
         </div>
@@ -216,33 +237,34 @@ function ModelComparisonPanel({ features }) {
         style={styles.toggleButton}
       >
         <span>{expanded ? "Hide" : "Show"} Individual Models</span>
-        <span style={{
+        <ChevronDown size={16} strokeWidth={2.4} style={{
           transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
           transition: "transform 0.3s"
-        }}>▼</span>
+        }} />
       </button>
       
       {/* Individual Models Grid */}
       {expanded && (
         <div style={styles.modelsGrid}>
           {models.map((model, i) => (
-            <div 
-              key={model.model_key}
+            <div
+              key={model.model_key || model.name}
               className={`model-card ${model.agrees_with_consensus ? "agrees" : "disagrees"}`}
               style={{
                 ...styles.modelCard,
                 animation: `slideInUp 0.3s ease-out ${i * 0.05}s both`,
-                borderColor: model.agrees_with_consensus 
-                  ? "rgba(34, 197, 94, 0.3)" 
+                borderColor: model.agrees_with_consensus
+                  ? "rgba(34, 197, 94, 0.3)"
                   : "rgba(239, 68, 68, 0.2)"
               }}
             >
               <div style={styles.modelHeader}>
-                <span style={styles.modelIcon}>{model.icon}</span>
+                {(() => { const ModelIcon = iconFor(model.model_name || model.name);
+                  return <ModelIcon size={20} strokeWidth={2.2} color={model.color} />; })()}
                 <div>
-                  <div style={styles.modelName}>{model.model_name}</div>
+                  <div style={styles.modelName}>{model.model_name || model.name}</div>
                   <div style={styles.modelAccuracy}>
-                    Research: {(model.research_accuracy * 100).toFixed(1)}%
+                    Test: {(model.research_accuracy * 100).toFixed(1)}%
                   </div>
                 </div>
               </div>
@@ -270,9 +292,13 @@ function ModelComparisonPanel({ features }) {
               </div>
               
               {model.agrees_with_consensus ? (
-                <div style={styles.agreesBadge}>✓ Agrees</div>
+                <div style={styles.agreesBadge}>
+                  <CheckCircle2 size={12} strokeWidth={2.6} /> Agrees
+                </div>
               ) : (
-                <div style={styles.disagreesBadge}>✗ Disagrees</div>
+                <div style={styles.disagreesBadge}>
+                  <XCircle size={12} strokeWidth={2.6} /> Disagrees
+                </div>
               )}
             </div>
           ))}

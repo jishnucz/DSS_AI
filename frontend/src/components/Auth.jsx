@@ -1,128 +1,82 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-  @keyframes authFadeIn {
-    from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); }
+  @keyframes auth-fadeIn   { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes auth-slideIn  { from{opacity:0;transform:translateX(-20px)} to{opacity:1;transform:translateX(0)} }
+  @keyframes auth-float    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+  @keyframes auth-orbFloat { 0%,100%{transform:translate(0,0)} 50%{transform:translate(14px,-14px)} }
+  @keyframes auth-ring     { 0%{transform:scale(0.7);opacity:0.8} 100%{transform:scale(2);opacity:0} }
+  @keyframes auth-glow     { 0%,100%{box-shadow:0 0 30px rgba(34,197,94,0.2),0 0 60px rgba(34,197,94,0.08)} 50%{box-shadow:0 0 50px rgba(34,197,94,0.4),0 0 100px rgba(34,197,94,0.15)} }
+  @keyframes auth-pulse    { 0%,100%{opacity:0.5} 50%{opacity:1} }
+  @keyframes auth-gradMove { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+  @keyframes auth-spinner  { to{transform:rotate(360deg)} }
+  @keyframes auth-leafDrift{
+    0%{transform:translateY(0) translateX(0) rotate(0deg);opacity:0}
+    8%{opacity:0.6}
+    92%{opacity:0.6}
+    100%{transform:translateY(-100vh) translateX(40px) rotate(360deg);opacity:0}
   }
 
-  @keyframes authSlideIn {
-    from { opacity: 0; transform: translateX(-30px); }
-    to { opacity: 1; transform: translateX(0); }
-  }
+  .auth-root { font-family:'Poppins',sans-serif; }
+  .auth-root * { box-sizing:border-box; }
 
-  @keyframes authGlow {
-    0%, 100% { box-shadow: 0 20px 60px rgba(34, 197, 94, 0.15); }
-    50% { box-shadow: 0 25px 70px rgba(34, 197, 94, 0.25); }
+  .auth-input-field {
+    background: rgba(255,255,255,0.06) !important;
+    border: 1.5px solid rgba(255,255,255,0.12) !important;
+    color: #fff !important;
+    font-family: 'Inter', sans-serif !important;
+    transition: all 0.25s ease !important;
   }
-
-  @keyframes authFloat {
-    0%, 100% { transform: translateY(0) rotate(0deg); }
-    50% { transform: translateY(-15px) rotate(5deg); }
-  }
-
-  @keyframes authPulse {
-    0%, 100% { opacity: 0.6; }
-    50% { opacity: 1; }
-  }
-
-  @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
-  }
-
-  @keyframes gradientMove {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
-
-  @keyframes leafDrift {
-    0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
-    10% { opacity: 0.7; }
-    90% { opacity: 0.7; }
-    100% { transform: translateY(-100vh) translateX(50px) rotate(180deg); opacity: 0; }
-  }
-
-  @keyframes cloudDrift {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100vw); }
-  }
-
-  .auth-input {
-    transition: all 0.3s ease !important;
-  }
-
-  .auth-input:focus {
-    border-color: #22c55e !important;
-    box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.15), 0 4px 20px rgba(34, 197, 94, 0.1) !important;
+  .auth-input-field::placeholder { color: rgba(255,255,255,0.3) !important; }
+  .auth-input-field:focus {
+    border-color: rgba(34,197,94,0.6) !important;
+    box-shadow: 0 0 0 3px rgba(34,197,94,0.12), 0 4px 20px rgba(34,197,94,0.1) !important;
+    background: rgba(34,197,94,0.06) !important;
     outline: none !important;
-    transform: translateY(-1px);
   }
 
-  .auth-input::placeholder {
-    color: #94a3b8;
+  .auth-submit-btn {
+    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+    border: none !important;
+    color: #fff !important;
+    font-family: 'Poppins', sans-serif !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    position: relative !important;
+    overflow: hidden !important;
+    transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1) !important;
   }
-
-  .auth-btn {
-    position: relative;
-    overflow: hidden;
-    transition: all 0.3s ease !important;
-  }
-
-  .auth-btn::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  .auth-submit-btn::before {
+    content:'';
+    position:absolute; inset:0;
+    background: linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);
     transform: translateX(-100%);
-    transition: transform 0.6s ease;
+    transition: transform 0.5s ease;
   }
+  .auth-submit-btn:hover:not(:disabled)::before { transform:translateX(100%); }
+  .auth-submit-btn:hover:not(:disabled) {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 16px 40px rgba(34,197,94,0.45) !important;
+  }
+  .auth-submit-btn:disabled { opacity:0.5 !important; cursor:not-allowed !important; }
 
-  .auth-btn:hover:not(:disabled)::before {
-    transform: translateX(100%);
-  }
+  .auth-toggle-btn { transition: all 0.2s ease !important; }
+  .auth-toggle-btn:hover { color: #22c55e !important; }
 
-  .auth-btn:hover:not(:disabled) {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 40px rgba(34, 197, 94, 0.35) !important;
-  }
+  .auth-back-btn { transition: all 0.2s ease !important; }
+  .auth-back-btn:hover { background: rgba(255,255,255,0.08) !important; border-color: rgba(255,255,255,0.2) !important; }
 
-  .auth-btn:active:not(:disabled) {
-    transform: translateY(-1px);
-  }
+  .auth-social-btn { transition: all 0.25s ease !important; }
+  .auth-social-btn:hover { background: rgba(255,255,255,0.1) !important; border-color: rgba(255,255,255,0.25) !important; transform: translateY(-2px) !important; }
 
-  .auth-toggle:hover {
-    color: #16a34a !important;
-    text-decoration: underline;
-  }
-
-  .auth-feature-card:hover {
-    transform: translateY(-5px) !important;
-    box-shadow: 0 20px 40px rgba(34, 197, 94, 0.15) !important;
-  }
-
-  .social-btn:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
-  }
+  .auth-feat-card { transition: transform 0.3s ease !important; }
+  .auth-feat-card:hover { transform: translateY(-4px) !important; }
 
   @media (max-width: 1024px) {
-    .auth-split-container {
-      flex-direction: column !important;
-    }
-    .auth-image-section {
-      display: none !important;
-    }
-    .auth-form-section {
-      max-width: 100% !important;
-      padding: 40px 24px !important;
-    }
-    .auth-mobile-logo {
-      display: flex !important;
-    }
+    .auth-left-panel { display:none !important; }
+    .auth-right-panel { max-width:100% !important; }
   }
 `;
 
@@ -135,55 +89,87 @@ function inject(id, css) {
   }
 }
 
+/* ─── Left panel canvas ─── */
+function LeftCanvas() {
+  const ref = useRef(null);
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let raf;
+    const resize = () => { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; };
+    resize();
+    window.addEventListener("resize", resize);
+    const pts = Array.from({ length: 35 }, () => ({
+      x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4, r: Math.random() + 0.4,
+    }));
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      pts.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(74,222,128,0.4)"; ctx.fill();
+        pts.forEach(q => {
+          const dx = p.x - q.x, dy = p.y - q.y, d = Math.sqrt(dx*dx+dy*dy);
+          if (d < 120) {
+            ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y);
+            ctx.strokeStyle = `rgba(74,222,128,${0.12 * (1 - d/120)})`;
+            ctx.lineWidth = 0.5; ctx.stroke();
+          }
+        });
+      });
+      raf = requestAnimationFrame(draw);
+    };
+    draw();
+    return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", resize); };
+  }, []);
+  return <canvas ref={ref} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />;
+}
+
+const FEATS = [
+  { icon: "🎯", value: "86.4%", label: "Stacking Ensemble Accuracy", color: "#22c55e" },
+  { icon: "🔮", value: "1.2°C", label: "Tmax MAE at day+1",         color: "#818cf8" },
+  { icon: "🧬", value: "25",    label: "ML Features Engineered",     color: "#06b6d4" },
+  { icon: "📡", value: "42 Yrs",label: "ERA5 Climate Record",         color: "#f59e0b" },
+];
+
+const LEAVES = ["🌿", "🍃", "🌱", "☘️", "🌾"];
+
 export default function Auth({ onLogin, onBack }) {
-  const [mode, setMode] = useState("login"); // login or register
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
+  const [mode, setMode] = useState("login");
+  const [formData, setFormData] = useState({ name: "", email: "", password: "", confirmPassword: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showPwd, setShowPwd] = useState(false);
+  const [visible, setVisible] = useState(false);
 
-  inject("auth-styles", CSS);
+  inject("auth-css-v3", CSS);
+
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), 80);
+    return () => clearTimeout(t);
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError("");
-    setSuccess("");
+    setError(""); setSuccess("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
-    setSuccess("");
+    setLoading(true); setError(""); setSuccess("");
 
-    // Validation
     if (!formData.email || !formData.password) {
-      setError("Please fill in all required fields");
-      setLoading(false);
-      return;
+      setError("Please fill in all required fields"); setLoading(false); return;
     }
-
     if (mode === "register") {
-      if (!formData.name) {
-        setError("Please enter your name");
-        setLoading(false);
-        return;
-      }
-      if (formData.password !== formData.confirmPassword) {
-        setError("Passwords do not match");
-        setLoading(false);
-        return;
-      }
-      if (formData.password.length < 6) {
-        setError("Password must be at least 6 characters");
-        setLoading(false);
-        return;
-      }
+      if (!formData.name) { setError("Please enter your name"); setLoading(false); return; }
+      if (formData.password !== formData.confirmPassword) { setError("Passwords do not match"); setLoading(false); return; }
+      if (formData.password.length < 6) { setError("Password must be at least 6 characters"); setLoading(false); return; }
     }
 
     try {
@@ -192,7 +178,6 @@ export default function Auth({ onLogin, onBack }) {
         ? { email: formData.email, password: formData.password }
         : { name: formData.name, email: formData.email, password: formData.password };
 
-      // Add timeout to prevent infinite loading
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
 
@@ -202,711 +187,486 @@ export default function Auth({ onLogin, onBack }) {
         body: JSON.stringify(body),
         signal: controller.signal,
       });
-
       clearTimeout(timeoutId);
-
       const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.detail || "Something went wrong");
-      }
+      if (!res.ok) throw new Error(data.detail || "Something went wrong");
 
       if (mode === "register") {
-        setSuccess("Registration successful! Please login.");
+        setSuccess("Account created! Please sign in.");
         setMode("login");
         setFormData({ ...formData, password: "", confirmPassword: "" });
       } else {
-        // Pass user and token to parent component
         onLogin?.(data.user, data.token);
       }
     } catch (err) {
-      if (err.name === 'AbortError') {
-        setError("Request timed out. Please check if the server is running.");
-      } else if (err.message === 'Failed to fetch') {
-        setError("Cannot connect to server. Please ensure the backend is running on port 8000.");
-      } else {
-        setError(err.message || "Something went wrong");
-      }
+      if (err.name === "AbortError") setError("Request timed out. Check if the server is running.");
+      else if (err.message === "Failed to fetch") setError("Cannot connect to server. Ensure backend is running on port 8000.");
+      else setError(err.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
   const toggleMode = () => {
-    setMode(mode === "login" ? "register" : "login");
-    setError("");
-    setSuccess("");
+    setMode(m => m === "login" ? "register" : "login");
+    setError(""); setSuccess("");
     setFormData({ name: "", email: "", password: "", confirmPassword: "" });
   };
 
+  const pwdStrength = (() => {
+    const p = formData.password;
+    if (!p) return null;
+    if (p.length < 6) return { level: 1, label: "Weak", color: "#ef4444" };
+    if (p.length < 10 || !/[A-Z]/.test(p)) return { level: 2, label: "Fair", color: "#f59e0b" };
+    if (/[A-Z]/.test(p) && /[0-9]/.test(p)) return { level: 3, label: "Strong", color: "#22c55e" };
+    return { level: 2, label: "Fair", color: "#f59e0b" };
+  })();
+
   return (
-    <div style={styles.container}>
-      <div className="auth-split-container" style={styles.splitContainer}>
-        {/* Left Side - Image Section */}
-        <div className="auth-image-section" style={styles.imageSection}>
-          {/* Background Image */}
-          <div style={styles.bgImage} />
-          
-          {/* Gradient Overlay */}
-          <div style={styles.imageOverlay} />
-          
-          {/* Floating Leaves */}
-          {['🌿', '🍃', '🌱', '☘️', '🌾', '🍂'].map((leaf, i) => (
-            <div
-              key={i}
-              style={{
-                position: 'absolute',
-                fontSize: `${20 + i * 4}px`,
-                left: `${10 + i * 15}%`,
-                top: '100%',
-                animation: `leafDrift ${15 + i * 5}s linear infinite`,
-                animationDelay: `${i * 2}s`,
-                zIndex: 2,
-              }}
-            >
-              {leaf}
+    <div className="auth-root" style={S.root}>
+
+      {/* ── LEFT PANEL ── */}
+      <div className="auth-left-panel" style={S.left}>
+        {/* Canvas */}
+        <LeftCanvas />
+
+        {/* BG image */}
+        <div style={S.leftBgImg} />
+        <div style={S.leftOverlay} />
+
+        {/* Ambient orbs */}
+        <div style={{ ...S.orb, top: "8%", right: "10%", width: 200, height: 200, background: "radial-gradient(circle,rgba(34,197,94,0.15),transparent 70%)", animation: "auth-orbFloat 10s ease-in-out infinite" }} />
+        <div style={{ ...S.orb, bottom: "15%", left: "6%", width: 140, height: 140, background: "radial-gradient(circle,rgba(99,102,241,0.12),transparent 70%)", animation: "auth-orbFloat 14s ease-in-out infinite 3s" }} />
+
+        {/* Grid */}
+        <div style={S.leftGrid} />
+
+        {/* Floating leaves */}
+        {LEAVES.map((leaf, i) => (
+          <div key={i} style={{
+            position: "absolute", fontSize: `${18 + i * 4}px`,
+            left: `${8 + i * 18}%`, top: "100%",
+            animation: `auth-leafDrift ${16 + i * 4}s linear infinite`,
+            animationDelay: `${i * 2.5}s`, zIndex: 2, pointerEvents: "none",
+          }}>{leaf}</div>
+        ))}
+
+        {/* Content */}
+        <div style={{ ...S.leftContent, opacity: visible ? 1 : 0, transform: visible ? "none" : "translateY(16px)", transition: "all 0.7s ease" }}>
+          {/* Logo */}
+          <div style={S.leftLogo}>
+            <div style={{ position: "relative", width: 72, height: 72 }}>
+              <div style={{ ...S.ring, animation: "auth-ring 2.5s ease-out infinite" }} />
+              <div style={{ ...S.ring, animation: "auth-ring 2.5s ease-out infinite 0.5s" }} />
+              <div style={{ ...S.logoCircle, animation: "auth-glow 3s ease-in-out infinite" }}>
+                <span style={{ fontSize: 28, filter: "drop-shadow(0 0 12px rgba(34,197,94,0.8))" }}>🌾</span>
+              </div>
             </div>
-          ))}
-          
-          {/* Content */}
-          <div style={styles.imageContent}>
-            {/* Logo */}
-            <div style={styles.imageLogo}>
-              <span style={styles.imageLogoIcon}>🌾</span>
-              <span style={styles.imageLogoText}>AgriDSS</span>
-            </div>
-            
-            {/* Main Headline */}
-            <h1 style={styles.imageTitle}>
-              Smart Farming
-              <br />
-              <span style={styles.imageTitleHighlight}>Starts Here</span>
-            </h1>
-            
-            <p style={styles.imageSubtitle}>
-              AI-powered agricultural decision support system for farmers.
-              Get real-time insights, weather forecasts, and crop recommendations.
-            </p>
-            
-            {/* Feature Cards */}
-            <div style={styles.featureGrid}>
-              {[
-                { icon: '🤖', title: '88.3% Accuracy', desc: 'ML Ensemble Model' },
-                { icon: '🌤️', title: 'Weather Insights', desc: 'ERA5 Data Analysis' },
-                { icon: '🌱', title: 'Crop Guidance', desc: 'Stage-wise Tips' },
-              ].map((f, i) => (
-                <div key={i} className="auth-feature-card" style={styles.featureCard}>
-                  <span style={styles.featureIcon}>{f.icon}</span>
-                  <div>
-                    <div style={styles.featureTitle}>{f.title}</div>
-                    <div style={styles.featureDesc}>{f.desc}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            {/* Trust Badge */}
-            <div style={styles.trustBadge}>
-              <span style={styles.trustIcon}>🎓</span>
-              <span style={styles.trustText}>M.Tech Research Project • ERA5 Climate Intelligence</span>
+            <div>
+              <div style={S.leftLogoName}><span style={{ color: "#4ade80" }}>AgriDSS</span> Intelligence</div>
+              <div style={S.leftLogoSub}>AI-Powered Crop Stress Forecasting</div>
             </div>
           </div>
-        </div>
-        
-        {/* Right Side - Form Section */}
-        <div className="auth-form-section" style={styles.formSection}>
-          {/* Back Button */}
-          {onBack && (
-            <button onClick={onBack} style={styles.backBtn}>
-              <span>←</span>
-              <span>Back to Home</span>
-            </button>
-          )}
-          
-          {/* Form Card */}
-          <div style={styles.formCard}>
-            {/* Mobile Logo */}
-            <div className="auth-mobile-logo" style={styles.mobileLogo}>
-              <span style={styles.mobileLogoIcon}>🌾</span>
-              <span style={styles.mobileLogoText}>AgriDSS</span>
-            </div>
-            
-            {/* Form Header */}
-            <div style={styles.formHeader}>
-              <h2 style={styles.formTitle}>
-                {mode === "login" ? "Welcome Back! 👋" : "Join AgriDSS 🌱"}
-              </h2>
-              <p style={styles.formSubtitle}>
-                {mode === "login"
-                  ? "Sign in to access your personalized dashboard"
-                  : "Create your account and start exploring"}
-              </p>
-            </div>
 
-            {/* Error/Success Messages */}
-            {error && (
-              <div style={styles.errorBox}>
-                <span style={styles.errorIcon}>⚠️</span>
-                <span>{error}</span>
-              </div>
-            )}
-            {success && (
-              <div style={styles.successBox}>
-                <span style={styles.successIcon}>✅</span>
-                <span>{success}</span>
-              </div>
-            )}
+          {/* Headline */}
+          <h1 style={S.leftTitle}>
+            Smart Farming<br />
+            <span style={S.leftTitleGrad}>Starts Here</span>
+          </h1>
+          <p style={S.leftSub}>
+            42 years of ERA5 climate data, 6-model stacking ensemble, SHAP explainability, and live Open-Meteo forecasts — built for Palakkad farmers.
+          </p>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} style={styles.form}>
-              {mode === "register" && (
-                <div style={styles.inputGroup}>
-                  <label style={styles.label}>
-                    <span style={styles.labelIcon}>👤</span>
-                    Full Name
-                  </label>
-                  <input
-                    className="auth-input"
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    placeholder="Enter your full name"
-                    style={styles.input}
-                  />
+          {/* Feature stats */}
+          <div style={S.leftFeats}>
+            {FEATS.map((f, i) => (
+              <div key={i} className="auth-feat-card" style={{ ...S.leftFeatCard, animationDelay: `${0.2 + i * 0.1}s` }}>
+                <span style={{ fontSize: "1.5rem" }}>{f.icon}</span>
+                <div>
+                  <div style={{ ...S.featValue, color: f.color }}>{f.value}</div>
+                  <div style={S.featLabel}>{f.label}</div>
                 </div>
-              )}
+              </div>
+            ))}
+          </div>
 
-              <div style={styles.inputGroup}>
-                <label style={styles.label}>
-                  <span style={styles.labelIcon}>✉️</span>
-                  Email Address
-                </label>
+          {/* Trust badge */}
+          <div style={S.trustBadge}>
+            <span style={{ fontSize: "1.1rem" }}>🎓</span>
+            <span style={S.trustText}>M.Tech Research · ERA5 Climate Intelligence · Verified 2026</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── RIGHT PANEL ── */}
+      <div className="auth-right-panel" style={S.right}>
+        {/* BG */}
+        <div style={S.rightBg} />
+        <div style={S.rightGrid} />
+
+        {/* Back button */}
+        {onBack && (
+          <button onClick={onBack} className="auth-back-btn" style={S.backBtn}>
+            ← Back to Home
+          </button>
+        )}
+
+        {/* Form card */}
+        <div style={{ ...S.formCard, opacity: visible ? 1 : 0, transform: visible ? "none" : "translateY(20px)", transition: "all 0.7s ease 0.1s" }}>
+
+          {/* Mobile logo */}
+          <div style={S.mobileLogo}>
+            <span style={{ fontSize: "2rem" }}>🌾</span>
+            <span style={S.mobileLogoText}><span style={{ color: "#4ade80" }}>AgriDSS</span> Intelligence</span>
+          </div>
+
+          {/* Header */}
+          <div style={S.formHead}>
+            <h2 style={S.formTitle}>
+              {mode === "login" ? "Welcome back" : "Create account"}
+            </h2>
+            <p style={S.formSub}>
+              {mode === "login"
+                ? "Sign in to your AgriDSS dashboard"
+                : "Join the precision agriculture revolution"}
+            </p>
+          </div>
+
+          {/* Alerts */}
+          {error && (
+            <div style={S.errorBox} role="alert">
+              <span style={{ fontSize: "1rem" }}>⚠</span>
+              <span style={{ fontSize: "0.88rem" }}>{error}</span>
+            </div>
+          )}
+          {success && (
+            <div style={S.successBox} role="status">
+              <span style={{ fontSize: "1rem" }}>✓</span>
+              <span style={{ fontSize: "0.88rem" }}>{success}</span>
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} style={S.form}>
+            {mode === "register" && (
+              <div style={S.inputGroup}>
+                <label style={S.label}>Full Name</label>
                 <input
-                  className="auth-input"
-                  type="email"
-                  name="email"
-                  value={formData.email}
+                  className="auth-input-field"
+                  type="text" name="name"
+                  value={formData.name}
                   onChange={handleChange}
-                  placeholder="you@example.com"
-                  style={styles.input}
+                  placeholder="Your full name"
+                  style={S.input}
+                  autoComplete="name"
                 />
               </div>
+            )}
 
-              <div style={styles.inputGroup}>
-                <label style={styles.label}>
-                  <span style={styles.labelIcon}>🔒</span>
-                  Password
-                </label>
+            <div style={S.inputGroup}>
+              <label style={S.label}>Email Address</label>
+              <input
+                className="auth-input-field"
+                type="email" name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="you@example.com"
+                style={S.input}
+                autoComplete="email"
+              />
+            </div>
+
+            <div style={S.inputGroup}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                <label style={S.label}>Password</label>
+                {mode === "login" && (
+                  <a href="#" style={S.forgotLink}>Forgot password?</a>
+                )}
+              </div>
+              <div style={{ position: "relative" }}>
                 <input
-                  className="auth-input"
-                  type="password"
+                  className="auth-input-field"
+                  type={showPwd ? "text" : "password"}
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder={mode === "login" ? "Enter your password" : "Create a strong password"}
-                  style={styles.input}
+                  placeholder={mode === "login" ? "Your password" : "Create a strong password"}
+                  style={{ ...S.input, paddingRight: 48 }}
+                  autoComplete={mode === "login" ? "current-password" : "new-password"}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPwd(p => !p)}
+                  style={S.eyeBtn}
+                >
+                  {showPwd ? "🙈" : "👁"}
+                </button>
               </div>
-
-              {mode === "register" && (
-                <div style={styles.inputGroup}>
-                  <label style={styles.label}>
-                    <span style={styles.labelIcon}>🔐</span>
-                    Confirm Password
-                  </label>
-                  <input
-                    className="auth-input"
-                    type="password"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    placeholder="Confirm your password"
-                    style={styles.input}
-                  />
+              {/* Password strength */}
+              {mode === "register" && formData.password && pwdStrength && (
+                <div style={S.pwdStrength}>
+                  <div style={S.pwdBars}>
+                    {[1, 2, 3].map(l => (
+                      <div key={l} style={{ ...S.pwdBar, background: l <= pwdStrength.level ? pwdStrength.color : "rgba(255,255,255,0.1)" }} />
+                    ))}
+                  </div>
+                  <span style={{ fontSize: "0.7rem", color: pwdStrength.color, fontWeight: 600 }}>{pwdStrength.label}</span>
                 </div>
               )}
+            </div>
 
-              {mode === "login" && (
-                <div style={styles.rememberRow}>
-                  <label style={styles.checkboxLabel}>
-                    <input type="checkbox" style={styles.checkbox} />
-                    <span>Remember me</span>
-                  </label>
-                  <a href="#" style={styles.forgotLink}>Forgot password?</a>
-                </div>
-              )}
-
-              <button
-                type="submit"
-                className="auth-btn"
-                style={styles.submitBtn}
-                disabled={loading}
-              >
-                {loading ? (
-                  <span style={styles.spinner}>⟳</span>
-                ) : mode === "login" ? (
-                  <>
-                    <span>Sign In</span>
-                    <span style={styles.btnArrow}>→</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Create Account</span>
-                    <span style={styles.btnArrow}>→</span>
-                  </>
+            {mode === "register" && (
+              <div style={S.inputGroup}>
+                <label style={S.label}>Confirm Password</label>
+                <input
+                  className="auth-input-field"
+                  type="password" name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  placeholder="Confirm your password"
+                  style={S.input}
+                  autoComplete="new-password"
+                />
+                {formData.confirmPassword && (
+                  <div style={{ marginTop: 6, fontSize: "0.72rem", color: formData.password === formData.confirmPassword ? "#22c55e" : "#ef4444" }}>
+                    {formData.password === formData.confirmPassword ? "✓ Passwords match" : "✗ Passwords do not match"}
+                  </div>
                 )}
-              </button>
-            </form>
+              </div>
+            )}
 
-            {/* Divider */}
-            <div style={styles.divider}>
-              <span style={styles.dividerLine} />
-              <span style={styles.dividerText}>or continue with</span>
-              <span style={styles.dividerLine} />
-            </div>
+            {mode === "login" && (
+              <label style={S.rememberLabel}>
+                <input type="checkbox" style={S.checkbox} />
+                <span style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.5)" }}>Remember me</span>
+              </label>
+            )}
 
-            {/* Social Buttons */}
-            <div style={styles.socialButtons}>
-              <button className="social-btn" style={styles.socialBtn}>
-                <span style={styles.socialIcon}>🌐</span>
-                <span>Google</span>
-              </button>
-              <button className="social-btn" style={styles.socialBtn}>
-                <span style={styles.socialIcon}>📱</span>
-                <span>Phone</span>
-              </button>
-            </div>
+            <button type="submit" className="auth-submit-btn" style={S.submitBtn} disabled={loading}>
+              {loading ? (
+                <span style={S.spinner} />
+              ) : (
+                <>
+                  <span>{mode === "login" ? "Sign In" : "Create Account"}</span>
+                  <span style={{ fontSize: "1.1rem" }}>→</span>
+                </>
+              )}
+            </button>
+          </form>
 
-            {/* Toggle Mode */}
-            <div style={styles.toggleSection}>
-              <span style={styles.toggleText}>
-                {mode === "login" ? "Don't have an account?" : "Already have an account?"}
-              </span>
-              <button
-                type="button"
-                className="auth-toggle"
-                onClick={toggleMode}
-                style={styles.toggleBtn}
-              >
-                {mode === "login" ? "Sign Up Free" : "Sign In"}
-              </button>
-            </div>
+          {/* Divider */}
+          <div style={S.divider}>
+            <span style={S.divLine} />
+            <span style={S.divText}>or continue with</span>
+            <span style={S.divLine} />
           </div>
-          
-          {/* Footer */}
-          <div style={styles.footer}>
-            <p style={styles.footerText}>
-              By continuing, you agree to our <a href="#" style={styles.footerLink}>Terms of Service</a> and <a href="#" style={styles.footerLink}>Privacy Policy</a>
-            </p>
+
+          {/* Social */}
+          <div style={S.socialRow}>
+            {[
+              { icon: "🌐", label: "Google" },
+              { icon: "📱", label: "Phone" },
+            ].map(s => (
+              <button key={s.label} className="auth-social-btn" style={S.socialBtn}>
+                <span style={{ fontSize: "1.1rem" }}>{s.icon}</span>
+                <span>{s.label}</span>
+              </button>
+            ))}
           </div>
+
+          {/* Toggle */}
+          <div style={S.toggleRow}>
+            <span style={S.toggleText}>
+              {mode === "login" ? "Don't have an account?" : "Already have an account?"}
+            </span>
+            <button type="button" className="auth-toggle-btn" onClick={toggleMode} style={S.toggleBtn}>
+              {mode === "login" ? "Sign Up Free" : "Sign In"}
+            </button>
+          </div>
+
+          <p style={S.tos}>
+            By continuing, you agree to our{" "}
+            <a href="#" style={S.tosLink}>Terms</a> and{" "}
+            <a href="#" style={S.tosLink}>Privacy Policy</a>
+          </p>
         </div>
       </div>
     </div>
   );
 }
 
-const styles = {
-  container: {
-    minHeight: "100vh",
-    display: "flex",
-    alignItems: "stretch",
-    background: "linear-gradient(135deg, #f0fdf4 0%, #ffffff 50%, #ecfdf5 100%)",
-    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+const S = {
+  root: {
+    minHeight: "100vh", display: "flex",
+    background: "#030a0f", overflow: "hidden",
+  },
+
+  // Left panel
+  left: {
+    flex: "1.25", position: "relative",
+    display: "flex", flexDirection: "column",
+    justifyContent: "center", padding: "60px 56px",
     overflow: "hidden",
   },
-  splitContainer: {
-    display: "flex",
-    width: "100%",
-    minHeight: "100vh",
+  leftBgImg: {
+    position: "absolute", inset: 0,
+    backgroundImage: "url(https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&q=70)",
+    backgroundSize: "cover", backgroundPosition: "center 30%",
+    opacity: 0.15, filter: "saturate(1.2)",
   },
-  
-  // Left Side - Image Section
-  imageSection: {
-    flex: "1.2",
-    position: "relative",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    padding: "60px",
-    overflow: "hidden",
+  leftOverlay: {
+    position: "absolute", inset: 0,
+    background: "linear-gradient(135deg,rgba(3,10,15,0.88) 0%,rgba(5,46,22,0.80) 60%,rgba(3,10,15,0.9) 100%)",
   },
-  bgImage: {
-    position: "absolute",
-    inset: 0,
-    backgroundImage: `url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1920&q=80')`,
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    backgroundRepeat: "no-repeat",
+  leftGrid: {
+    position: "absolute", inset: 0,
+    backgroundImage: "linear-gradient(rgba(34,197,94,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(34,197,94,0.03) 1px,transparent 1px)",
+    backgroundSize: "60px 60px",
   },
-  imageOverlay: {
-    position: "absolute",
-    inset: 0,
-    background: `linear-gradient(
-      135deg,
-      rgba(5, 46, 22, 0.92) 0%,
-      rgba(20, 83, 45, 0.88) 50%,
-      rgba(22, 101, 52, 0.85) 100%
-    )`,
+  orb: { position: "absolute", borderRadius: "50%", pointerEvents: "none" },
+
+  leftContent: { position: "relative", zIndex: 3, maxWidth: 500 },
+
+  // Logo row
+  leftLogo: { display: "flex", alignItems: "center", gap: 16, marginBottom: 44 },
+  ring: { position: "absolute", inset: 0, border: "1.5px solid rgba(34,197,94,0.4)", borderRadius: "50%", animation: "auth-ring 2.5s ease-out infinite" },
+  logoCircle: {
+    position: "absolute", inset: 14, borderRadius: "50%",
+    background: "linear-gradient(135deg,rgba(34,197,94,0.2),rgba(3,10,15,0.9))",
+    border: "2px solid rgba(34,197,94,0.5)",
+    display: "flex", alignItems: "center", justifyContent: "center",
   },
-  imageContent: {
-    position: "relative",
-    zIndex: 3,
-    maxWidth: "500px",
-  },
-  imageLogo: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    marginBottom: "40px",
-  },
-  imageLogoIcon: {
-    fontSize: "42px",
-    animation: "authFloat 4s ease-in-out infinite",
-  },
-  imageLogoText: {
-    fontSize: "1.6rem",
-    fontWeight: 800,
-    fontFamily: "'Poppins', sans-serif",
-    color: "#fff",
-    letterSpacing: "-0.5px",
-  },
-  imageTitle: {
-    fontSize: "3.2rem",
-    fontWeight: 800,
-    fontFamily: "'Poppins', sans-serif",
-    color: "#fff",
-    lineHeight: 1.1,
-    margin: "0 0 24px 0",
-    letterSpacing: "-1px",
-  },
-  imageTitleHighlight: {
-    background: "linear-gradient(90deg, #4ade80, #86efac)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
-  },
-  imageSubtitle: {
-    fontSize: "1.1rem",
-    color: "rgba(255, 255, 255, 0.8)",
-    lineHeight: 1.6,
-    marginBottom: "40px",
-  },
-  featureGrid: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "16px",
-    marginBottom: "40px",
-  },
-  featureCard: {
-    display: "flex",
-    alignItems: "center",
-    gap: "16px",
-    padding: "18px 22px",
-    background: "rgba(255, 255, 255, 0.1)",
-    backdropFilter: "blur(10px)",
-    borderRadius: "16px",
-    border: "1px solid rgba(255, 255, 255, 0.15)",
-    transition: "all 0.3s ease",
+  leftLogoName: { fontSize: "1.2rem", fontWeight: 800, color: "#fff" },
+  leftLogoSub: { fontSize: "0.72rem", color: "rgba(255,255,255,0.45)", marginTop: 2 },
+
+  leftTitle: { fontSize: "3rem", fontWeight: 900, lineHeight: 1.1, marginBottom: 18, letterSpacing: "-1px" },
+  leftTitleGrad: { background: "linear-gradient(135deg,#4ade80,#22c55e)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" },
+  leftSub: { fontSize: "0.95rem", color: "rgba(255,255,255,0.6)", lineHeight: 1.7, marginBottom: 36 },
+
+  leftFeats: { display: "flex", flexDirection: "column", gap: 10, marginBottom: 32 },
+  leftFeatCard: {
+    display: "flex", alignItems: "center", gap: 14,
+    padding: "14px 18px", borderRadius: 14,
+    background: "rgba(255,255,255,0.05)", backdropFilter: "blur(8px)",
+    border: "1px solid rgba(255,255,255,0.08)",
     cursor: "default",
   },
-  featureIcon: {
-    fontSize: "28px",
-  },
-  featureTitle: {
-    fontSize: "1rem",
-    fontWeight: 700,
-    color: "#fff",
-    fontFamily: "'Poppins', sans-serif",
-  },
-  featureDesc: {
-    fontSize: "0.85rem",
-    color: "rgba(255, 255, 255, 0.7)",
-  },
+  featValue: { fontSize: "1.1rem", fontWeight: 800, fontFamily: "'JetBrains Mono',monospace" },
+  featLabel: { fontSize: "0.78rem", color: "rgba(255,255,255,0.55)", marginTop: 1 },
+
   trustBadge: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "10px",
-    padding: "12px 20px",
-    background: "rgba(74, 222, 128, 0.15)",
-    border: "1px solid rgba(74, 222, 128, 0.3)",
-    borderRadius: "30px",
+    display: "inline-flex", alignItems: "center", gap: 10,
+    background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.15)",
+    padding: "10px 18px", borderRadius: 100,
   },
-  trustIcon: {
-    fontSize: "18px",
+  trustText: { fontSize: "0.78rem", color: "rgba(255,255,255,0.7)", fontWeight: 500 },
+
+  // Right panel
+  right: {
+    flex: "1", position: "relative",
+    display: "flex", flexDirection: "column",
+    justifyContent: "center", alignItems: "center",
+    padding: "50px 40px", minWidth: 0,
+    borderLeft: "1px solid rgba(255,255,255,0.06)",
   },
-  trustText: {
-    fontSize: "0.85rem",
-    color: "rgba(255, 255, 255, 0.9)",
-    fontWeight: 500,
+  rightBg: {
+    position: "absolute", inset: 0,
+    background: "linear-gradient(160deg,rgba(34,197,94,0.04) 0%,rgba(3,10,15,0) 50%,rgba(99,102,241,0.04) 100%)",
   },
-  
-  // Right Side - Form Section
-  formSection: {
-    flex: "1",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: "50px",
-    background: "#fff",
-    position: "relative",
-    maxWidth: "560px",
+  rightGrid: {
+    position: "absolute", inset: 0,
+    backgroundImage: "linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px)",
+    backgroundSize: "50px 50px",
   },
+
   backBtn: {
-    position: "absolute",
-    top: "28px",
-    left: "28px",
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    padding: "10px 18px",
-    background: "rgba(34, 197, 94, 0.08)",
-    border: "1px solid rgba(34, 197, 94, 0.2)",
-    borderRadius: "12px",
-    color: "#16a34a",
-    fontSize: "0.9rem",
-    fontWeight: 500,
-    fontFamily: "'Poppins', sans-serif",
-    cursor: "pointer",
-    transition: "all 0.2s ease",
+    position: "absolute", top: 28, left: 28,
+    display: "flex", alignItems: "center", gap: 6,
+    padding: "9px 16px", borderRadius: 10,
+    background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
+    color: "rgba(255,255,255,0.65)", fontSize: "0.85rem", fontWeight: 500,
+    cursor: "pointer", fontFamily: "'Poppins',sans-serif",
   },
-  formCard: {
-    width: "100%",
-    maxWidth: "400px",
-    animation: "authFadeIn 0.6s ease-out",
-  },
+
+  formCard: { width: "100%", maxWidth: 420, position: "relative", zIndex: 2 },
+
   mobileLogo: {
-    display: "none",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "10px",
-    marginBottom: "32px",
+    display: "none", alignItems: "center", justifyContent: "center", gap: 10,
+    marginBottom: 28, fontSize: "1.2rem", fontWeight: 800,
   },
-  mobileLogoIcon: {
-    fontSize: "36px",
-  },
-  mobileLogoText: {
-    fontSize: "1.4rem",
-    fontWeight: 800,
-    background: "linear-gradient(135deg, #16a34a, #22c55e)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
-    fontFamily: "'Poppins', sans-serif",
-  },
-  formHeader: {
-    marginBottom: "32px",
-  },
-  formTitle: {
-    margin: "0 0 8px",
-    fontSize: "1.9rem",
-    fontWeight: 700,
-    fontFamily: "'Poppins', sans-serif",
-    color: "#1f2937",
-    letterSpacing: "-0.5px",
-  },
-  formSubtitle: {
-    margin: 0,
-    fontSize: "1rem",
-    color: "#64748b",
-    lineHeight: 1.5,
-  },
+  mobileLogoText: { fontSize: "1.2rem", fontWeight: 800 },
+
+  formHead: { marginBottom: 28 },
+  formTitle: { fontSize: "2rem", fontWeight: 800, color: "#fff", marginBottom: 8, letterSpacing: "-0.5px" },
+  formSub: { fontSize: "0.9rem", color: "rgba(255,255,255,0.45)", lineHeight: 1.5 },
+
   errorBox: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    padding: "14px 18px",
-    borderRadius: "14px",
-    background: "rgba(239, 68, 68, 0.08)",
-    border: "1px solid rgba(239, 68, 68, 0.2)",
-    color: "#dc2626",
-    fontSize: "0.9rem",
-    marginBottom: "20px",
-    animation: "authSlideIn 0.3s ease-out",
-  },
-  errorIcon: {
-    fontSize: "16px",
+    display: "flex", alignItems: "center", gap: 10,
+    padding: "12px 16px", borderRadius: 12, marginBottom: 18,
+    background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
+    color: "#fca5a5", animation: "auth-slideIn 0.3s ease",
   },
   successBox: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    padding: "14px 18px",
-    borderRadius: "14px",
-    background: "rgba(34, 197, 94, 0.08)",
-    border: "1px solid rgba(34, 197, 94, 0.2)",
-    color: "#16a34a",
-    fontSize: "0.9rem",
-    marginBottom: "20px",
-    animation: "authSlideIn 0.3s ease-out",
+    display: "flex", alignItems: "center", gap: 10,
+    padding: "12px 16px", borderRadius: 12, marginBottom: 18,
+    background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)",
+    color: "#86efac", animation: "auth-slideIn 0.3s ease",
   },
-  successIcon: {
-    fontSize: "16px",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "20px",
-  },
-  inputGroup: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px",
-  },
-  label: {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    fontSize: "0.9rem",
-    color: "#374151",
-    fontWeight: 600,
-    fontFamily: "'Poppins', sans-serif",
-  },
-  labelIcon: {
-    fontSize: "14px",
-  },
+
+  form: { display: "flex", flexDirection: "column", gap: 18 },
+  inputGroup: { display: "flex", flexDirection: "column" },
+  label: { fontSize: "0.82rem", fontWeight: 600, color: "rgba(255,255,255,0.65)", marginBottom: 7, fontFamily: "'Poppins',sans-serif" },
   input: {
-    padding: "16px 20px",
-    borderRadius: "14px",
-    border: "2px solid #e5e7eb",
-    background: "#fafafa",
-    color: "#1f2937",
-    fontSize: "1rem",
-    fontFamily: "'Inter', sans-serif",
-    fontWeight: 500,
-    transition: "all 0.2s ease",
+    padding: "14px 18px", borderRadius: 12, fontSize: "0.95rem",
+    fontWeight: 500, width: "100%",
   },
-  rememberRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: "-8px",
+  eyeBtn: {
+    position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)",
+    background: "none", border: "none", cursor: "pointer", fontSize: "1.1rem",
+    lineHeight: 1,
   },
-  checkboxLabel: {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    fontSize: "0.9rem",
-    color: "#64748b",
-    cursor: "pointer",
-  },
-  checkbox: {
-    width: "18px",
-    height: "18px",
-    accentColor: "#22c55e",
-    cursor: "pointer",
-  },
-  forgotLink: {
-    fontSize: "0.9rem",
-    color: "#22c55e",
-    fontWeight: 600,
-    textDecoration: "none",
-    transition: "color 0.2s",
-  },
+  pwdStrength: { display: "flex", alignItems: "center", gap: 8, marginTop: 8 },
+  pwdBars: { display: "flex", gap: 4 },
+  pwdBar: { width: 32, height: 3, borderRadius: 3, transition: "background 0.3s ease" },
+
+  forgotLink: { fontSize: "0.8rem", color: "#4ade80", textDecoration: "none", fontWeight: 500 },
+  rememberLabel: { display: "flex", alignItems: "center", gap: 8, cursor: "pointer" },
+  checkbox: { width: 16, height: 16, accentColor: "#22c55e", cursor: "pointer" },
+
   submitBtn: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "10px",
-    marginTop: "8px",
-    padding: "18px",
-    borderRadius: "14px",
-    border: "none",
-    background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
-    color: "#FFFFFF",
-    fontSize: "1.05rem",
-    fontWeight: 700,
-    cursor: "pointer",
-    fontFamily: "'Poppins', sans-serif",
-    boxShadow: "0 8px 30px rgba(34, 197, 94, 0.3)",
-    transition: "all 0.3s ease",
-  },
-  btnArrow: {
-    fontSize: "1.2rem",
-    transition: "transform 0.2s",
+    display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+    padding: "15px", borderRadius: 13, fontSize: "1rem",
+    boxShadow: "0 8px 30px rgba(34,197,94,0.3)",
+    marginTop: 2,
   },
   spinner: {
+    width: 20, height: 20, border: "2.5px solid rgba(255,255,255,0.3)",
+    borderTopColor: "#fff", borderRadius: "50%",
+    animation: "auth-spinner 0.8s linear infinite",
     display: "inline-block",
-    fontSize: "1.2rem",
-    animation: "spin 0.8s linear infinite",
   },
-  divider: {
-    display: "flex",
-    alignItems: "center",
-    gap: "16px",
-    margin: "28px 0",
-  },
-  dividerLine: {
-    flex: 1,
-    height: "1px",
-    background: "#e5e7eb",
-  },
-  dividerText: {
-    fontSize: "0.85rem",
-    color: "#94a3b8",
-    fontWeight: 500,
-    whiteSpace: "nowrap",
-  },
-  socialButtons: {
-    display: "flex",
-    gap: "12px",
-  },
+
+  divider: { display: "flex", alignItems: "center", gap: 12, margin: "24px 0" },
+  divLine: { flex: 1, height: 1, background: "rgba(255,255,255,0.08)" },
+  divText: { fontSize: "0.78rem", color: "rgba(255,255,255,0.3)", fontWeight: 500, whiteSpace: "nowrap" },
+
+  socialRow: { display: "flex", gap: 10, marginBottom: 24 },
   socialBtn: {
-    flex: 1,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "10px",
-    padding: "14px",
-    borderRadius: "12px",
-    border: "2px solid #e5e7eb",
-    background: "#fff",
-    color: "#374151",
-    fontSize: "0.95rem",
-    fontWeight: 600,
-    fontFamily: "'Poppins', sans-serif",
-    cursor: "pointer",
-    transition: "all 0.2s ease",
+    flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+    padding: "12px 16px", borderRadius: 12,
+    background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
+    color: "rgba(255,255,255,0.7)", fontSize: "0.9rem", fontWeight: 600,
+    cursor: "pointer", fontFamily: "'Poppins',sans-serif",
   },
-  socialIcon: {
-    fontSize: "18px",
-  },
-  toggleSection: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: "8px",
-    marginTop: "28px",
-  },
-  toggleText: {
-    color: "#64748b",
-    fontSize: "0.95rem",
-  },
+
+  toggleRow: { display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginBottom: 16 },
+  toggleText: { fontSize: "0.88rem", color: "rgba(255,255,255,0.4)" },
   toggleBtn: {
-    background: "none",
-    border: "none",
-    color: "#22c55e",
-    fontSize: "0.95rem",
-    fontWeight: 700,
-    cursor: "pointer",
-    fontFamily: "'Poppins', sans-serif",
-    transition: "color 0.2s ease",
+    background: "none", border: "none",
+    color: "#22c55e", fontSize: "0.88rem", fontWeight: 700,
+    cursor: "pointer", fontFamily: "'Poppins',sans-serif",
   },
-  footer: {
-    position: "absolute",
-    bottom: "28px",
-    left: 0,
-    right: 0,
-    textAlign: "center",
-    padding: "0 28px",
-  },
-  footerText: {
-    fontSize: "0.8rem",
-    color: "#94a3b8",
-    lineHeight: 1.6,
-  },
-  footerLink: {
-    color: "#22c55e",
-    textDecoration: "none",
-    fontWeight: 500,
-  },
+
+  tos: { fontSize: "0.72rem", color: "rgba(255,255,255,0.25)", textAlign: "center", lineHeight: 1.6 },
+  tosLink: { color: "rgba(34,197,94,0.7)", textDecoration: "none" },
 };

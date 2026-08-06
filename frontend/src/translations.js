@@ -29,7 +29,7 @@ export const translations = {
     locationInfo: "Location Information",
     locationDetails: "Location",
     district: "District",
-    districtPlaceholder: "e.g., Palakkad, Wayanad, Thrissur",
+    districtPlaceholder: "e.g., Your District",
     taluk: "Taluk",
     talukPlaceholder: "Taluk name",
     village: "Village",

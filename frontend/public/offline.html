@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline - AgriDSS Palakkad</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #1f2937;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .header {
+      text-align: center;
+      padding: 30px 20px;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+    }
+    .header h1 {
+      font-size: 1.8rem;
+      color: #16a34a;
+      margin-bottom: 8px;
+    }
+    .header p {
+      color: #64748b;
+    }
+    .offline-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .card h2 {
+      font-size: 1.1rem;
+      color: #16a34a;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .info-grid {
+      display: grid;
+      gap: 8px;
+    }
+    .info-item {
+      padding: 12px;
+      background: #f0fdf4;
+      border-radius: 10px;
+      font-size: 0.9rem;
+    }
+    .info-item strong {
+      color: #16a34a;
+    }
+    .stage-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .stage {
+      padding: 8px 12px;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: white;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .emergency {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      padding: 16px;
+      border-radius: 12px;
+      margin-top: 16px;
+    }
+    .emergency h3 {
+      color: #dc2626;
+      margin-bottom: 8px;
+    }
+    .phone-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .phone-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px;
+      background: white;
+      border-radius: 8px;
+    }
+    .phone-item a {
+      color: #16a34a;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .retry-btn {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    .retry-btn:active {
+      transform: scale(0.98);
+    }
+    
+    /* Malayalam text support */
+    .ml { font-family: 'Noto Sans Malayalam', sans-serif; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="offline-icon">📴</div>
+      <h1>You're Offline</h1>
+      <p>നിങ്ങൾ ഓഫ്‌ലൈനാണ് - ഇന്റർനെറ്റ് ഇല്ല</p>
+      <p style="margin-top: 8px; font-size: 0.9rem;">Don't worry! Here's essential farming info stored on your device:</p>
+    </div>
+
+    <!-- Rice Cultivation Guide -->
+    <div class="card">
+      <h2>🌾 Rice (നെല്ല്) - Quick Guide</h2>
+      <div class="stage-list">
+        <span class="stage">Nursery 20d</span>
+        <span class="stage">Transplant 15d</span>
+        <span class="stage">Tillering 30d</span>
+        <span class="stage">Flowering 20d</span>
+        <span class="stage">Grain Fill 25d</span>
+        <span class="stage">Harvest</span>
+      </div>
+      <div class="info-grid" style="margin-top: 16px;">
+        <div class="info-item">
+          <strong>💧 Water:</strong> Maintain 5-7cm standing water during tillering
+        </div>
+        <div class="info-item">
+          <strong>🌱 Fertilizer:</strong> Apply Urea 30kg/ha at 3 weeks after transplanting
+        </div>
+        <div class="info-item">
+          <strong>🐛 Watch for:</strong> Leaf blast, Brown plant hopper, Stem borer
+        </div>
+      </div>
+    </div>
+
+    <!-- Current Season Advisory -->
+    <div class="card">
+      <h2>📅 Virippu Season (June-Sep)</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <strong>Ideal crops:</strong> Rice (Uma, Jyothi varieties), Vegetables
+        </div>
+        <div class="info-item">
+          <strong>Monsoon tip:</strong> Ensure proper drainage to prevent waterlogging
+        </div>
+        <div class="info-item">
+          <strong>Disease risk:</strong> High humidity → Watch for fungal diseases
+        </div>
+      </div>
+    </div>
+
+    <!-- Emergency Pest Solutions -->
+    <div class="card">
+      <h2>🛡️ Emergency Pest Solutions</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <strong>Leaf Blast:</strong> Tricyclazole 0.6g/L or Carbendazim 1g/L spray
+        </div>
+        <div class="info-item">
+          <strong>BPH (Brown Hopper):</strong> Drain water, apply Imidacloprid
+        </div>
+        <div class="info-item">
+          <strong>Stem Borer:</strong> Apply Carbofuran granules at tillering
+        </div>
+      </div>
+    </div>
+
+    <!-- Offline Crop Calendar -->
+    <div class="card">
+      <h2>🗓️ Palakkad Crop Calendar</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <strong>Virippu (വിരിപ്പ്):</strong> June-September (Monsoon crop)
+        </div>
+        <div class="info-item">
+          <strong>Mundakan (മുണ്ടകൻ):</strong> September-January (Second crop)
+        </div>
+        <div class="info-item">
+          <strong>Puncha (പുഞ്ച):</strong> January-May (Summer crop, irrigated)
+        </div>
+      </div>
+    </div>
+
+    <!-- Emergency Contacts -->
+    <div class="card">
+      <h2>📞 Emergency Contacts</h2>
+      <div class="emergency">
+        <h3>🚨 Helplines (Works without internet)</h3>
+        <div class="phone-list">
+          <div class="phone-item">
+            <span>Kisan Call Center</span>
+            <a href="tel:1800-180-1551">1800-180-1551</a>
+          </div>
+          <div class="phone-item">
+            <span>Krishi Bhavan Palakkad</span>
+            <a href="tel:0491-2505456">0491-2505456</a>
+          </div>
+          <div class="phone-item">
+            <span>KAU Helpline</span>
+            <a href="tel:0487-2438300">0487-2438300</a>
+          </div>
+          <div class="phone-item">
+            <span>Pest Emergency</span>
+            <a href="tel:1800-425-1661">1800-425-1661</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SMS Service Info -->
+    <div class="card">
+      <h2>📱 SMS Service (No Internet Needed)</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          Send <strong>CROP RICE</strong> to <strong>51969</strong> for rice advisory
+        </div>
+        <div class="info-item">
+          Send <strong>WEATHER PKD</strong> to <strong>51969</strong> for Palakkad weather
+        </div>
+        <div class="info-item">
+          Send <strong>PRICE PADDY</strong> to <strong>51969</strong> for market prices
+        </div>
+      </div>
+    </div>
+
+    <button class="retry-btn" onclick="location.reload()">
+      🔄 Try Again / വീണ്ടും ശ്രമിക്കുക
+    </button>
+
+    <p style="text-align: center; margin-top: 16px; color: #64748b; font-size: 0.85rem;">
+      Tip: Once online, the app will automatically sync your data
+    </p>
+  </div>
+
+  <script>
+    // Check if online and reload
+    window.addEventListener('online', () => {
+      location.reload();
+    });
+  </script>
+</body>
+</html>

@@ -1,36 +1,56 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
+/* ─── CSS injected once ─── */
 const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
-  
-  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-  @keyframes slideUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes slideDown { from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
-  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
-  @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
-  @keyframes gradient { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-  
-  .landing-page { font-family: 'Poppins', sans-serif; }
-  .landing-page * { box-sizing: border-box; }
-  
-  .hero-cta:hover { transform: translateY(-3px) !important; box-shadow: 0 20px 50px rgba(34,197,94,0.4) !important; }
-  .feature-card:hover { transform: translateY(-8px) !important; border-color: rgba(34,197,94,0.4) !important; }
-  .step-card:hover { background: rgba(34,197,94,0.08) !important; }
-  
-  .scroll-indicator { animation: float 2s ease-in-out infinite; }
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  @keyframes lp-fadeIn   { from{opacity:0} to{opacity:1} }
+  @keyframes lp-slideUp  { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes lp-slideDown{ from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes lp-float    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  @keyframes lp-orbFloat { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(30px,-20px) scale(1.05)} 66%{transform:translate(-20px,15px) scale(0.97)} }
+  @keyframes lp-gradMove { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+  @keyframes lp-shimmer  { 0%{background-position:-300% 0} 100%{background-position:300% 0} }
+  @keyframes lp-pulse    { 0%,100%{opacity:0.4;transform:scale(1)} 50%{opacity:0.7;transform:scale(1.02)} }
+  @keyframes lp-countUp  { from{opacity:0;transform:scale(0.6)} to{opacity:1;transform:scale(1)} }
+  @keyframes lp-barFill  { from{width:0} to{width:var(--target-w)} }
+  @keyframes lp-bounceIn { 0%{opacity:0;transform:translateY(20px)} 60%{transform:translateY(-4px)} 100%{opacity:1;transform:translateY(0)} }
+
+  .lp-page *{box-sizing:border-box;margin:0;padding:0}
+  .lp-page{font-family:'Poppins',sans-serif;background:#030a0f;color:#fff;overflow-x:hidden}
+
+  .lp-nav-link{transition:color 0.2s ease}
+  .lp-nav-link:hover{color:#4ade80 !important}
+
+  .lp-cta-primary{transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1) !important}
+  .lp-cta-primary:hover{transform:translateY(-4px) scale(1.03) !important;box-shadow:0 20px 60px rgba(34,197,94,0.45) !important}
+
+  .lp-cta-ghost{transition:all 0.25s ease !important}
+  .lp-cta-ghost:hover{background:rgba(255,255,255,0.08) !important;border-color:rgba(255,255,255,0.4) !important}
+
+  .lp-feat-card{transition:all 0.35s cubic-bezier(0.34,1.56,0.64,1) !important}
+  .lp-feat-card:hover{transform:translateY(-10px) !important;box-shadow:0 30px 60px rgba(0,0,0,0.4) !important}
+
+  .lp-step-card{transition:all 0.3s ease !important}
+  .lp-step-card:hover{background:rgba(34,197,94,0.06) !important;border-color:rgba(34,197,94,0.25) !important}
+
+  .lp-acc-row{transition:all 0.2s ease !important}
+  .lp-acc-row:hover{background:rgba(255,255,255,0.04) !important}
+
+  .lp-stat-card{transition:all 0.3s ease !important}
+  .lp-stat-card:hover{transform:translateY(-6px) !important;background:rgba(255,255,255,0.06) !important}
+
+  @media(max-width:768px){
+    .lp-hero-stats{flex-wrap:wrap !important;gap:10px !important}
+    .lp-feat-grid{grid-template-columns:1fr 1fr !important}
+    .lp-steps-grid{grid-template-columns:1fr 1fr !important}
+    .lp-acc-grid{grid-template-columns:1fr !important}
+    .lp-preview-grid{grid-template-columns:1fr !important}
+    .lp-hero-title{font-size:2.2rem !important}
+  }
 `;
 
-// Premium agriculture images
-const IMAGES = {
-  hero: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1920&q=85",
-  paddy: "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=800&q=80",
-  farmer: "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=800&q=80",
-  kerala: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=800&q=80",
-  weather: "https://images.unsplash.com/photo-1504608524841-42fe6f032b4b?w=800&q=80",
-};
-
-function injectCSS(id, css) {
+function inject(id, css) {
   if (!document.querySelector(`style[data-id="${id}"]`)) {
     const el = document.createElement("style");
     el.setAttribute("data-id", id);
@@ -39,824 +59,618 @@ function injectCSS(id, css) {
   }
 }
 
+/* ─── Data ─── */
+const FEATURES = [
+  { icon: "🎯", title: "86.4% Stacking Ensemble", desc: "Stacking meta-learner over 6 models (LightGBM, BiLSTM, GRU, RF, XGBoost, PatchTST) predicts crop stress class on a 42-year ERA5 dataset. CCSI tercile labels, balanced 33/33/33.", color: "#22c55e", border: "#22c55e30", bg: "rgba(34,197,94,0.05)" },
+  { icon: "🔮", title: "Live 7-Day Forecast", desc: "Seq2Seq LSTM forecasts Tmax/Tmin/Rain for the next 7 days with MAE 1.20°C at d+1 — beats climatology baseline by 2.7×. Combined with Open-Meteo ECMWF data for real-time inference.", color: "#6366f1", border: "#6366f130", bg: "rgba(99,102,241,0.05)" },
+  { icon: "🌦️", title: "42-Year ERA5 Record", desc: "1984–2026 ECMWF reanalysis at daily resolution. Temperature, 4-layer soil moisture, precipitation, wind, radiation — 77,360 rows × 52 features across 5 taluks.", color: "#06b6d4", border: "#06b6d430", bg: "rgba(6,182,212,0.05)" },
+  { icon: "🔬", title: "SHAP + Attention Explainability", desc: "Every prediction is explained. SHAP on XGBoost shows precipitation drives 18.6% of variance. BiLSTM temporal attention reveals which of the 30 input days matter most.", color: "#f59e0b", border: "#f59e0b30", bg: "rgba(245,158,11,0.05)" },
+  { icon: "🌾", title: "Stage-Aware Crop Advisory", desc: "Rice growth stage tracking for Virippu (Jun) and Mundakan (Oct) seasons. Flowering + Tmax>35°C triggers high-priority alerts. KAU Package-of-Practices integrated.", color: "#10b981", border: "#10b98130", bg: "rgba(16,185,129,0.05)" },
+  { icon: "🗺️", title: "Per-Taluk Forecast Coverage", desc: "All 5 master-taluks (Chittur, Kollengode, Kuzhalmannam, Mannarkkad, Nenmara) with live Open-Meteo data, soil composition, elevation, and crop distribution.", color: "#ec4899", border: "#ec489930", bg: "rgba(236,72,153,0.05)" },
+];
+
+const ACCURACY_DATA = [
+  { label: "LightGBM (best individual)", value: 86.4, color: "#22c55e", task: "Classification" },
+  { label: "Stacking Ensemble (final)",  value: 86.4, color: "#16a34a", task: "Ensemble" },
+  { label: "Soft-voting Ensemble",       value: 85.9, color: "#86efac", task: "Ensemble" },
+  { label: "BiLSTM + attention",         value: 84.9, color: "#6366f1", task: "Deep Learning" },
+  { label: "GRU",                        value: 84.4, color: "#818cf8", task: "Deep Learning" },
+  { label: "PatchTST (Transformer)",     value: 81.5, color: "#a78bfa", task: "Deep Learning" },
+];
+
+const STATS = [
+  { value: "86.4%", label: "Stacking Ensemble", icon: "🎯", color: "#22c55e" },
+  { value: "1.2°C", label: "Tmax MAE d+1",      icon: "🔮", color: "#6366f1" },
+  { value: "25",    label: "ML Features",       icon: "🧬", color: "#06b6d4" },
+  { value: "42 Yrs",label: "ERA5 Record",       icon: "📡", color: "#f59e0b" },
+  { value: "6",     label: "Models",            icon: "🗺️", color: "#ec4899" },
+];
+
+const STEPS = [
+  { n: "01", icon: "📍", title: "Select Your Taluk", desc: "Pick your location in Palakkad district for hyper-local climate and crop data." },
+  { n: "02", icon: "🌱", title: "Enter Crop Details", desc: "Specify your crop type and sowing date for phenology-aware recommendations." },
+  { n: "03", icon: "🤖", title: "Get AI Analysis", desc: "CCSI-based stress prediction with SHAP explanations and 7-day forecast." },
+  { n: "04", icon: "✅", title: "Act Precisely", desc: "Tailored irrigation, fertilizer, and protection actions — right day, right dose." },
+];
+
+/* ─── Hero Canvas ─── */
+function HeroCanvas() {
+  const ref = useRef(null);
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let raf;
+    const resize = () => { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; };
+    resize();
+    window.addEventListener("resize", resize);
+    const pts = Array.from({ length: 45 }, () => ({
+      x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.5, vy: (Math.random() - 0.5) * 0.5, r: Math.random() + 0.5,
+    }));
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      pts.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(34,197,94,0.5)"; ctx.fill();
+        pts.forEach(q => {
+          const dx = p.x - q.x, dy = p.y - q.y, d = Math.sqrt(dx*dx+dy*dy);
+          if (d < 160) {
+            ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y);
+            ctx.strokeStyle = `rgba(34,197,94,${0.1 * (1 - d/160)})`; ctx.lineWidth = 0.5; ctx.stroke();
+          }
+        });
+      });
+      raf = requestAnimationFrame(draw);
+    };
+    draw();
+    return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", resize); };
+  }, []);
+  return <canvas ref={ref} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />;
+}
+
+/* ─── Accuracy Bar ─── */
+function AccBar({ item, visible }) {
+  return (
+    <div className="lp-acc-row" style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", borderRadius: 10, marginBottom: 4 }}>
+      <div style={{ width: 160, flexShrink: 0 }}>
+        <div style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.75)", fontWeight: 500 }}>{item.label}</div>
+        <div style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.35)", marginTop: 1, fontFamily: "'JetBrains Mono',monospace" }}>{item.task}</div>
+      </div>
+      <div style={{ flex: 1, height: 6, background: "rgba(255,255,255,0.06)", borderRadius: 4, overflow: "hidden" }}>
+        <div style={{ height: "100%", width: visible ? `${item.value}%` : "0%", background: `linear-gradient(90deg,${item.color},${item.color}99)`, borderRadius: 4, transition: "width 1s cubic-bezier(0.4,0,0.2,1) 0.1s", boxShadow: `0 0 8px ${item.color}60` }} />
+      </div>
+      <div style={{ fontSize: "0.82rem", fontWeight: 700, color: item.color, width: 44, textAlign: "right", fontFamily: "'JetBrains Mono',monospace" }}>{item.value}%</div>
+    </div>
+  );
+}
+
+/* ─── Main Component ─── */
 export default function LandingPage({ onGetStarted }) {
   const [scrollY, setScrollY] = useState(0);
-  const [imageLoaded, setImageLoaded] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const [accVisible, setAccVisible] = useState(false);
+  const accRef = useRef(null);
 
   useEffect(() => {
-    injectCSS("landing-css", CSS);
-    
-    // Preload hero image
-    const img = new Image();
-    img.onload = () => setImageLoaded(true);
-    img.src = IMAGES.hero;
-
-    const handleScroll = () => setScrollY(window.scrollY);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    inject("lp-css", CSS);
+    const t = setTimeout(() => setVisible(true), 80);
+    const onScroll = () => setScrollY(window.scrollY);
+    window.addEventListener("scroll", onScroll);
+    return () => { clearTimeout(t); window.removeEventListener("scroll", onScroll); };
   }, []);
 
-  const features = [
-    {
-      icon: "🌾",
-      title: "Crop Intelligence",
-      desc: "AI-powered crop disease detection and growth stage analysis with 88.3% accuracy",
-      color: "#22c55e",
-    },
-    {
-      icon: "🌤️",
-      title: "Weather Forecasting",
-      desc: "7-day accurate weather predictions using ERA5 climate data for your region",
-      color: "#3b82f6",
-    },
-    {
-      icon: "💧",
-      title: "Irrigation Guidance",
-      desc: "Smart irrigation recommendations based on soil moisture and crop water needs",
-      color: "#06b6d4",
-    },
-    {
-      icon: "🚨",
-      title: "Stress Alerts",
-      desc: "Real-time alerts for heat stress, drought risk, and pest outbreak conditions",
-      color: "#f59e0b",
-    },
-    {
-      icon: "📊",
-      title: "Yield Predictions",
-      desc: "Machine learning models to predict crop yield and optimize farming decisions",
-      color: "#8b5cf6",
-    },
-    {
-      icon: "🗺️",
-      title: "Taluk-wise Data",
-      desc: "Detailed analysis for all taluks in your region with local climate patterns",
-      color: "#ec4899",
-    },
-  ];
-
-  const howItWorks = [
-    {
-      step: "01",
-      icon: "📍",
-      title: "Select Your Location",
-      desc: "Choose your taluk to get localized recommendations",
-    },
-    {
-      step: "02",
-      icon: "🌱",
-      title: "Enter Crop Details",
-      desc: "Select your crop type and enter sowing date for accurate growth tracking",
-    },
-    {
-      step: "03",
-      icon: "🤖",
-      title: "Get AI Recommendations",
-      desc: "Receive smart irrigation, fertilizer, and protection recommendations",
-    },
-    {
-      step: "04",
-      icon: "📈",
-      title: "Track & Optimize",
-      desc: "Monitor crop health, weather forecasts, and adjust your farming practices",
-    },
-  ];
-
-  const stats = [
-    { value: "13", label: "Taluks Covered" },
-    { value: "88.3%", label: "AI Accuracy" },
-    { value: "7+", label: "Crop Types" },
-    { value: "24/7", label: "Support" },
-  ];
+  useEffect(() => {
+    if (!accRef.current) return;
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setAccVisible(true); }, { threshold: 0.2 });
+    obs.observe(accRef.current);
+    return () => obs.disconnect();
+  }, []);
 
   return (
-    <div className="landing-page" style={styles.page}>
-      {/* Hero Section */}
-      <section style={styles.heroSection}>
-        {/* Background Image with Parallax */}
-        <div style={{
-          ...styles.heroBgImage,
-          backgroundImage: `url(${IMAGES.hero})`,
-          opacity: imageLoaded ? 1 : 0,
-          transform: `translateY(${scrollY * 0.3}px)`,
-        }} />
-        
-        {/* Gradient Overlay */}
-        <div style={styles.heroOverlay} />
-        
-        {/* Ambient Glow */}
-        <div style={styles.heroGlow} />
+    <div className="lp-page">
 
-        {/* Navigation */}
-        <nav style={{
-          ...styles.nav,
-          background: scrollY > 50 ? "rgba(7, 16, 24, 0.95)" : "transparent",
-          backdropFilter: scrollY > 50 ? "blur(20px)" : "none",
-        }}>
-          <div style={styles.navContent}>
-            <div style={styles.logo}>
-              <span style={styles.logoIcon}>🌾</span>
-              <span style={styles.logoText}><span style={styles.logoGreen}>AgriDSS</span> Intelligence</span>
-            </div>
-            <div style={styles.navLinks}>
-              <a href="#features" style={styles.navLink}>Features</a>
-              <a href="#how-it-works" style={styles.navLink}>How It Works</a>
-              <button onClick={onGetStarted} style={styles.navCta}>Get Started</button>
-            </div>
+      {/* ── Fixed Nav ── */}
+      <nav style={{ ...N.nav, background: scrollY > 60 ? "rgba(3,10,15,0.92)" : "transparent", backdropFilter: scrollY > 60 ? "blur(20px)" : "none", borderBottom: scrollY > 60 ? "1px solid rgba(255,255,255,0.06)" : "1px solid transparent" }}>
+        <div style={N.navInner}>
+          <div style={N.logo}>
+            <span style={{ fontSize: "1.6rem", animation: "lp-float 4s ease-in-out infinite" }}>🌾</span>
+            <span style={N.logoText}><span style={N.logoGreen}>AgriDSS</span> Intelligence</span>
           </div>
-        </nav>
+          <div style={N.navLinks}>
+            <a href="#features" className="lp-nav-link" style={N.navLink}>Features</a>
+            <a href="#research" className="lp-nav-link" style={N.navLink}>Research</a>
+            <a href="#how" className="lp-nav-link" style={N.navLink}>How It Works</a>
+            <button onClick={onGetStarted} className="lp-cta-primary" style={N.navBtn}>Get Started</button>
+          </div>
+        </div>
+      </nav>
 
-        {/* Hero Content */}
-        <div style={styles.heroContent}>
-          <div style={styles.heroBadge}>
-            <span>�</span>
-            <span>Next-Gen Agricultural Intelligence</span>
+      {/* ── Hero ── */}
+      <section style={H.section}>
+        {/* Canvas */}
+        <HeroCanvas />
+
+        {/* Bg image */}
+        <div style={{ ...H.bgImg, transform: `translateY(${scrollY * 0.25}px)` }} />
+        <div style={H.overlay} />
+
+        {/* Ambient orbs */}
+        <div style={{ ...H.orb, top: "15%", left: "5%", width: 350, height: 350, background: "radial-gradient(circle,rgba(34,197,94,0.07),transparent 70%)", animation: "lp-orbFloat 12s ease-in-out infinite" }} />
+        <div style={{ ...H.orb, bottom: "20%", right: "8%", width: 280, height: 280, background: "radial-gradient(circle,rgba(99,102,241,0.07),transparent 70%)", animation: "lp-orbFloat 15s ease-in-out infinite 3s" }} />
+
+        {/* Grid */}
+        <div style={H.grid} />
+
+        {/* Content */}
+        <div style={{ ...H.content, opacity: visible ? 1 : 0, transition: "opacity 0.8s ease" }}>
+
+          {/* Badge */}
+          <div style={{ ...H.badge, animation: visible ? "lp-slideDown 0.6s ease 0.1s both" : "none" }}>
+            <span style={H.badgeDot} />
+            <span>M.Tech Research 2026 · Verified on ERA5 Climate Data</span>
           </div>
-          
-          <h1 style={styles.heroTitle}>
-            Smart Farming for{" "}
-            <span style={styles.heroTitleGreen}>Better Harvests</span>
+
+          {/* Title */}
+          <h1 className="lp-hero-title" style={{ ...H.title, animation: visible ? "lp-slideUp 0.7s ease 0.2s both" : "none" }}>
+            AI-Powered Crop Stress{" "}
+            <span style={H.titleGrad}>Intelligence</span>
+            <br />
+            for Palakkad Farmers
           </h1>
-          
-          <p style={styles.heroSubtitle}>
-            AI-powered Decision Support System helping farmers make 
-            data-driven decisions for irrigation, crop protection, and yield optimization.
+
+          {/* Subtitle */}
+          <p style={{ ...H.subtitle, animation: visible ? "lp-slideUp 0.7s ease 0.3s both" : "none" }}>
+            42 years of ERA5 climate data · 6-model stacking ensemble · <strong style={{ color: "#4ade80" }}>86.4%</strong> stress classification · Seq2Seq weather forecast <strong style={{ color: "#818cf8" }}>1.2°C</strong> MAE at day+1
           </p>
 
-          <div style={styles.heroActions}>
-            <button onClick={onGetStarted} className="hero-cta" style={styles.heroCta}>
-              <span>Start Free</span>
-              <span style={styles.heroCtaArrow}>→</span>
+          {/* CTAs */}
+          <div style={{ ...H.ctaRow, animation: visible ? "lp-slideUp 0.7s ease 0.4s both" : "none" }}>
+            <button onClick={onGetStarted} className="lp-cta-primary" style={H.ctaPrimary}>
+              Get Started Free
+              <span style={{ fontSize: "1.1rem" }}>→</span>
             </button>
-            <a href="#how-it-works" style={styles.heroSecondary}>
-              <span>Learn How It Works</span>
+            <a href="#research" className="lp-cta-ghost" style={H.ctaGhost}>
+              View Research Results
             </a>
           </div>
 
-          {/* Stats Row */}
-          <div style={styles.heroStats}>
-            {stats.map((stat, i) => (
-              <div key={i} style={styles.heroStat}>
-                <div style={styles.heroStatValue}>{stat.value}</div>
-                <div style={styles.heroStatLabel}>{stat.label}</div>
+          {/* Stats */}
+          <div className="lp-hero-stats" style={{ ...H.stats, animation: visible ? "lp-slideUp 0.7s ease 0.5s both" : "none" }}>
+            {STATS.map((s, i) => (
+              <div key={i} className="lp-stat-card" style={{ ...H.statCard, animationDelay: `${0.5 + i * 0.08}s` }}>
+                <span style={{ fontSize: "1.4rem", marginBottom: 4 }}>{s.icon}</span>
+                <span style={{ ...H.statValue, color: s.color }}>{s.value}</span>
+                <span style={H.statLabel}>{s.label}</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Scroll Indicator */}
-        <div className="scroll-indicator" style={styles.scrollIndicator}>
-          <span>Scroll to explore</span>
-          <div style={styles.scrollArrow}>↓</div>
+        {/* Scroll indicator */}
+        <div style={H.scrollHint}>
+          <div style={{ animation: "lp-float 2s ease-in-out infinite" }}>
+            <div style={H.scrollDot} />
+          </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" style={styles.featuresSection}>
-        <div style={styles.sectionContainer}>
-          <div style={styles.sectionHeader}>
-            <span style={styles.sectionBadge}>🚀 Features</span>
-            <h2 style={styles.sectionTitle}>Everything You Need for Smart Farming</h2>
-            <p style={styles.sectionSubtitle}>
-              Powered by advanced AI and real-time weather data to help you make better farming decisions
-            </p>
+      {/* ── Features ── */}
+      <section id="features" style={F.section}>
+        <div style={F.inner}>
+          <div style={F.head}>
+            <span style={F.pill}>⚡ Core Features</span>
+            <h2 style={F.title}>Precision Agriculture, Powered by Science</h2>
+            <p style={F.sub}>Every feature is backed by 21 years of ERA5 climate data and verified research</p>
           </div>
-
-          <div style={styles.featuresGrid}>
-            {features.map((feature, i) => (
-              <div key={i} className="feature-card" style={styles.featureCard}>
-                <div style={{ ...styles.featureIconWrap, background: `${feature.color}15`, borderColor: `${feature.color}30` }}>
-                  <span style={styles.featureIcon}>{feature.icon}</span>
+          <div className="lp-feat-grid" style={F.grid}>
+            {FEATURES.map((feat, i) => (
+              <div key={i} className="lp-feat-card" style={{ ...F.card, borderColor: feat.border, background: feat.bg }}>
+                <div style={{ ...F.iconWrap, background: `${feat.color}15`, border: `1px solid ${feat.color}25` }}>
+                  <span style={{ fontSize: "1.7rem" }}>{feat.icon}</span>
                 </div>
-                <h3 style={styles.featureTitle}>{feature.title}</h3>
-                <p style={styles.featureDesc}>{feature.desc}</p>
+                <div style={{ ...F.cardTitle, color: feat.color }}>{feat.title}</div>
+                <div style={F.cardDesc}>{feat.desc}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works Section */}
-      <section id="how-it-works" style={styles.howSection}>
-        <div style={styles.sectionContainer}>
-          <div style={styles.sectionHeader}>
-            <span style={styles.sectionBadge}>📋 How It Works</span>
-            <h2 style={styles.sectionTitle}>Get Started in 4 Simple Steps</h2>
-            <p style={styles.sectionSubtitle}>
-              Our system is designed to be simple and easy to use for all farmers
+      {/* ── Research Accuracy ── */}
+      <section id="research" style={R.section} ref={accRef}>
+        {/* BG decoration */}
+        <div style={R.bgGlow} />
+        <div style={R.grid} />
+
+        <div style={R.inner}>
+          <div style={R.left}>
+            <span style={R.pill}>🔬 Verified Results</span>
+            <h2 style={R.title}>Real Numbers.<br />Real Research.</h2>
+            <p style={R.sub}>
+              All models tested on a held-out 2022–2026 dataset — no data leakage.
+              Two-contribution framework: C1 (same-day classification) and C2 (1-day forecasting).
             </p>
+            <div style={R.pills}>
+              {["ERA5-Land Data", "163 Features", "21-Year Analysis", "Mann-Kendall Trend"].map(t => (
+                <span key={t} style={R.tag}>{t}</span>
+              ))}
+            </div>
+            <div style={R.researchBadge}>
+              <span style={{ fontSize: "1.5rem" }}>🎓</span>
+              <div>
+                <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "#fff" }}>M.Tech Thesis Research</div>
+                <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.5)" }}>Department of Computer Science, 2026</div>
+              </div>
+            </div>
           </div>
 
-          <div style={styles.stepsGrid}>
-            {howItWorks.map((item, i) => (
-              <div key={i} className="step-card" style={styles.stepCard}>
-                <div style={styles.stepNumber}>{item.step}</div>
-                <div style={styles.stepIconWrap}>
-                  <span style={styles.stepIcon}>{item.icon}</span>
-                </div>
-                <h3 style={styles.stepTitle}>{item.title}</h3>
-                <p style={styles.stepDesc}>{item.desc}</p>
-                {i < howItWorks.length - 1 && (
-                  <div style={styles.stepConnector}>→</div>
-                )}
+          <div style={R.right}>
+            <div style={R.accCard}>
+              <div style={R.accCardHeader}>
+                <span style={R.accCardTitle}>Model Accuracy Comparison</span>
+                <span style={R.accCardSub}>Test Set: 2022–2026</span>
+              </div>
+              {ACCURACY_DATA.map((item, i) => (
+                <AccBar key={i} item={item} visible={accVisible} />
+              ))}
+              <div style={R.accNote}>
+                ✦ C1: same-day features → stress label · C2: 30-day lookback → next-day prediction
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── How it Works ── */}
+      <section id="how" style={W.section}>
+        <div style={W.inner}>
+          <div style={W.head}>
+            <span style={W.pill}>📋 How It Works</span>
+            <h2 style={W.title}>From Field to Forecast in 4 Steps</h2>
+            <p style={W.sub}>Designed for farmers — no technical knowledge required</p>
+          </div>
+          <div className="lp-steps-grid" style={W.grid}>
+            {STEPS.map((step, i) => (
+              <div key={i} className="lp-step-card" style={W.card}>
+                <div style={W.stepNum}>{step.n}</div>
+                <div style={W.stepIcon}>{step.icon}</div>
+                <div style={W.stepTitle}>{step.title}</div>
+                <div style={W.stepDesc}>{step.desc}</div>
+                {i < STEPS.length - 1 && <div style={W.connector}>→</div>}
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Preview Section */}
-      <section style={styles.previewSection}>
-        <div style={styles.sectionContainer}>
-          <div style={styles.previewContent}>
-            <div style={styles.previewText}>
-              <span style={styles.sectionBadge}>✨ See It In Action</span>
-              <h2 style={styles.sectionTitle}>Powerful Dashboard for Farmers</h2>
-              <p style={styles.sectionSubtitle}>
-                Get real-time insights, weather forecasts, and AI recommendations 
-                all in one easy-to-use dashboard designed for farmers.
-              </p>
-              <ul style={styles.previewList}>
-                <li style={styles.previewItem}>
-                  <span style={styles.previewCheck}>✓</span>
-                  <span>Interactive maps with taluk-wise data</span>
-                </li>
-                <li style={styles.previewItem}>
-                  <span style={styles.previewCheck}>✓</span>
-                  <span>7-day weather forecast with crop impact analysis</span>
-                </li>
-                <li style={styles.previewItem}>
-                  <span style={styles.previewCheck}>✓</span>
-                  <span>AI chatbot for instant farming advice</span>
-                </li>
-                <li style={styles.previewItem}>
-                  <span style={styles.previewCheck}>✓</span>
-                  <span>Crop image classifier for disease detection</span>
-                </li>
+      {/* ── Preview Section ── */}
+      <section style={PV.section}>
+        <div style={PV.inner}>
+          <div className="lp-preview-grid" style={PV.grid}>
+            <div style={PV.imgWrap}>
+              <img
+                src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=900&q=80"
+                alt="Rice paddy"
+                style={PV.img}
+              />
+              {/* Floating cards */}
+              <div style={PV.floatCard1}>
+                <span style={{ fontSize: "1.2rem" }}>🌤️</span>
+                <div>
+                  <div style={PV.floatLabel}>Stress Index</div>
+                  <div style={PV.floatValue}>CCSI: 0.38 — Moderate</div>
+                </div>
+              </div>
+              <div style={PV.floatCard2}>
+                <span style={{ fontSize: "1.2rem" }}>🧠</span>
+                <div>
+                  <div style={PV.floatLabel}>AI Confidence</div>
+                  <div style={PV.floatValue}>86.4% Ensemble</div>
+                </div>
+              </div>
+            </div>
+            <div style={PV.text}>
+              <span style={PV.pill}>✨ Live Dashboard</span>
+              <h2 style={PV.title}>Everything in One Intelligent Dashboard</h2>
+              <p style={PV.sub}>Real-time crop stress alerts, 7-day forecasts, taluk heatmaps, and AI chatbot — all designed for Palakkad farmers.</p>
+              <ul style={PV.list}>
+                {[
+                  "Interactive taluk-level stress heatmaps",
+                  "7-day weather impact forecast per crop stage",
+                  "SHAP feature importance explanations",
+                  "AI chatbot for instant agronomy advice",
+                  "Offline mode + SMS alerts for low connectivity",
+                  "Malayalam / Hindi / English multilingual support",
+                ].map((item, i) => (
+                  <li key={i} style={PV.listItem}>
+                    <span style={PV.check}>✓</span>
+                    <span style={{ color: "rgba(255,255,255,0.75)" }}>{item}</span>
+                  </li>
+                ))}
               </ul>
-              <button onClick={onGetStarted} className="hero-cta" style={styles.heroCta}>
-                <span>Try It Now - Free</span>
-                <span style={styles.heroCtaArrow}>→</span>
+              <button onClick={onGetStarted} className="lp-cta-primary" style={PV.cta}>
+                Launch Dashboard →
               </button>
             </div>
-            <div style={styles.previewImage}>
-              <img 
-                src={IMAGES.paddy} 
-                alt="Rice paddy field" 
-                style={styles.previewImg}
-              />
-              <div style={styles.previewOverlay}>
-                <div style={styles.previewCard}>
-                  <div style={styles.previewCardIcon}>🌤️</div>
-                  <div>
-                    <div style={styles.previewCardTitle}>Today's Forecast</div>
-                    <div style={styles.previewCardValue}>28°C, Light Rain</div>
-                  </div>
-                </div>
-                <div style={{ ...styles.previewCard, marginTop: "12px" }}>
-                  <div style={styles.previewCardIcon}>💧</div>
-                  <div>
-                    <div style={styles.previewCardTitle}>Irrigation</div>
-                    <div style={styles.previewCardValue}>Delay by 2 days</div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section style={styles.ctaSection}>
-        <div style={styles.ctaContent}>
-          <h2 style={styles.ctaTitle}>Ready to Transform Your Farming?</h2>
-          <p style={styles.ctaSubtitle}>
-            Join thousands of farmers using AI-powered insights for better harvests
+      {/* ── CTA Banner ── */}
+      <section style={CT.section}>
+        <div style={CT.glow} />
+        <div style={CT.inner}>
+          <div style={{ ...CT.badge, animation: "lp-pulse 3s ease-in-out infinite" }}>
+            🌱 Join the Precision Agriculture Revolution
+          </div>
+          <h2 style={CT.title}>Ready to Farm Smarter?</h2>
+          <p style={CT.sub}>
+            Get AI-powered crop stress predictions, 1-day forecasts, and actionable irrigation guidance — completely free.
           </p>
-          <button onClick={onGetStarted} className="hero-cta" style={{ ...styles.heroCta, fontSize: "1.1rem", padding: "18px 40px" }}>
-            <span>Get Started Free</span>
-            <span style={styles.heroCtaArrow}>→</span>
-          </button>
+          <div style={CT.ctaRow}>
+            <button onClick={onGetStarted} className="lp-cta-primary" style={CT.ctaBtn}>
+              Get Started Free
+              <span style={{ fontSize: "1.2rem" }}>→</span>
+            </button>
+          </div>
+          <div style={CT.stats}>
+            {["42-Year ERA5 Record", "25 ML Features", "5 Taluks Live", "86.4% Stacking Ensemble"].map(t => (
+              <span key={t} style={CT.stat}>{t}</span>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer style={styles.footer}>
-        <div style={styles.footerContent}>
-          <div style={styles.footerBrand}>
-            <span style={styles.logoIcon}>🌾</span>
-            <span style={styles.logoText}><span style={styles.logoGreen}>AgriDSS</span> Intelligence</span>
+      {/* ── Footer ── */}
+      <footer style={FT.footer}>
+        <div style={FT.inner}>
+          <div style={FT.brand}>
+            <span style={{ fontSize: "1.6rem" }}>🌾</span>
+            <span style={FT.brandText}><span style={{ color: "#4ade80" }}>AgriDSS</span> Intelligence</span>
           </div>
-          <p style={styles.footerText}>
-            M.Tech Research Project • Agricultural Decision Support System
+          <p style={FT.desc}>
+            AI-Powered Agricultural Decision Support System for Palakkad, Kerala.
+            <br />M.Tech Research Project · ERA5 Climate Intelligence · Verified 2026
           </p>
-          <p style={styles.footerCopy}>
-            © 2026 AgriDSS. Made with 💚 for farmers.
-          </p>
+          <div style={FT.tags}>
+            {["Stacking 86.4%", "BiLSTM 84.9%", "25 Features", "CCSI Framework", "SHAP Explainability"].map(t => (
+              <span key={t} style={FT.tag}>{t}</span>
+            ))}
+          </div>
+          <div style={FT.divider} />
+          <p style={FT.copy}>© 2026 AgriDSS Intelligence · Made with 💚 for Palakkad farmers</p>
         </div>
       </footer>
     </div>
   );
 }
 
-const styles = {
-  page: {
-    minHeight: "100vh",
-    background: "#071018",
-    color: "#fff",
-    fontFamily: "'Poppins', sans-serif",
-  },
+/* ── Styles ── */
+const cmn = {
+  pill: { display: "inline-block", background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.22)", padding: "6px 16px", borderRadius: 100, fontSize: "0.78rem", color: "#4ade80", fontWeight: 600, marginBottom: 14 },
+};
 
-  // Hero Section
-  heroSection: {
-    position: "relative",
-    minHeight: "100vh",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
+const N = {
+  nav: { position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, padding: "16px 0", transition: "all 0.35s ease" },
+  navInner: { maxWidth: 1200, margin: "0 auto", padding: "0 28px", display: "flex", alignItems: "center", justifyContent: "space-between" },
+  logo: { display: "flex", alignItems: "center", gap: 10 },
+  logoText: { fontSize: "1.2rem", fontWeight: 700, color: "#fff" },
+  logoGreen: { color: "#4ade80" },
+  navLinks: { display: "flex", alignItems: "center", gap: 32 },
+  navLink: { color: "rgba(255,255,255,0.65)", textDecoration: "none", fontSize: "0.88rem", fontWeight: 500 },
+  navBtn: {
+    background: "linear-gradient(135deg,#22c55e,#16a34a)", border: "none",
+    padding: "10px 22px", borderRadius: 100, color: "#fff",
+    fontSize: "0.88rem", fontWeight: 600, cursor: "pointer",
+    boxShadow: "0 6px 24px rgba(34,197,94,0.3)",
   },
-  heroBgImage: {
-    position: "absolute",
-    inset: "-50px",
-    backgroundSize: "cover",
-    backgroundPosition: "center 30%",
-    transition: "opacity 1.5s ease",
-    filter: "saturate(1.2)",
-  },
-  heroOverlay: {
-    position: "absolute",
-    inset: 0,
-    background: `linear-gradient(180deg, 
-      rgba(7, 16, 24, 0.7) 0%, 
-      rgba(7, 16, 24, 0.5) 40%,
-      rgba(7, 16, 24, 0.7) 70%,
-      rgba(7, 16, 24, 0.95) 100%
-    )`,
-  },
-  heroGlow: {
-    position: "absolute",
-    top: "20%",
-    left: "50%",
-    transform: "translateX(-50%)",
-    width: "80%",
-    height: "60%",
-    background: "radial-gradient(ellipse at center, rgba(34,197,94,0.08) 0%, transparent 60%)",
-    pointerEvents: "none",
-  },
+};
 
-  // Navigation
-  nav: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 100,
-    padding: "16px 0",
-    transition: "all 0.3s ease",
+const H = {
+  section: { position: "relative", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  bgImg: {
+    position: "absolute", inset: "-60px",
+    backgroundImage: "url(https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1920&q=70)",
+    backgroundSize: "cover", backgroundPosition: "center 30%",
+    opacity: 0.15, filter: "saturate(1.3)",
   },
-  navContent: {
-    maxWidth: "1200px",
-    margin: "0 auto",
-    padding: "0 24px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
+  overlay: {
+    position: "absolute", inset: 0,
+    background: "linear-gradient(180deg,rgba(3,10,15,0.8) 0%,rgba(3,10,15,0.55) 40%,rgba(3,10,15,0.8) 75%,#030a0f 100%)",
   },
-  logo: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
+  orb: { position: "absolute", borderRadius: "50%", pointerEvents: "none" },
+  grid: {
+    position: "absolute", inset: 0,
+    backgroundImage: "linear-gradient(rgba(34,197,94,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(34,197,94,0.02) 1px,transparent 1px)",
+    backgroundSize: "80px 80px",
   },
-  logoIcon: {
-    fontSize: "1.8rem",
+  content: { position: "relative", zIndex: 10, textAlign: "center", maxWidth: 900, padding: "0 24px", paddingTop: 90 },
+  badge: {
+    display: "inline-flex", alignItems: "center", gap: 8,
+    background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.18)",
+    padding: "8px 22px", borderRadius: 100, fontSize: "0.8rem", color: "#4ade80",
+    marginBottom: 26,
   },
-  logoText: {
-    fontSize: "1.3rem",
-    fontWeight: "700",
-    color: "#fff",
+  badgeDot: { width: 6, height: 6, borderRadius: "50%", background: "#22c55e", boxShadow: "0 0 8px #22c55e", display: "inline-block" },
+  title: { fontSize: "3.8rem", fontWeight: 900, lineHeight: 1.08, marginBottom: 22, letterSpacing: "-1.5px" },
+  titleGrad: { background: "linear-gradient(135deg,#4ade80,#22c55e,#16a34a)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" },
+  subtitle: { fontSize: "1.1rem", color: "rgba(255,255,255,0.62)", lineHeight: 1.75, maxWidth: 680, margin: "0 auto 34px" },
+  ctaRow: { display: "flex", alignItems: "center", justifyContent: "center", gap: 14, marginBottom: 52 },
+  ctaPrimary: {
+    display: "inline-flex", alignItems: "center", gap: 10,
+    background: "linear-gradient(135deg,#22c55e,#16a34a)", border: "none",
+    padding: "16px 34px", borderRadius: 100, color: "#fff",
+    fontSize: "1rem", fontWeight: 700, cursor: "pointer",
+    boxShadow: "0 12px 40px rgba(34,197,94,0.35)",
   },
-  logoGreen: {
-    color: "#4ade80",
+  ctaGhost: {
+    display: "inline-flex", alignItems: "center", gap: 8,
+    background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.15)",
+    padding: "15px 28px", borderRadius: 100, color: "rgba(255,255,255,0.8)",
+    fontSize: "0.95rem", fontWeight: 500, textDecoration: "none",
   },
-  navLinks: {
-    display: "flex",
-    alignItems: "center",
-    gap: "32px",
+  stats: { display: "flex", justifyContent: "center", gap: 12 },
+  statCard: {
+    display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+    background: "rgba(255,255,255,0.04)", backdropFilter: "blur(12px)",
+    border: "1px solid rgba(255,255,255,0.07)", borderRadius: 18,
+    padding: "16px 22px", minWidth: 90,
   },
-  navLink: {
-    color: "rgba(255,255,255,0.7)",
-    textDecoration: "none",
-    fontSize: "0.9rem",
-    fontWeight: "500",
-    transition: "color 0.2s ease",
-  },
-  navCta: {
-    background: "linear-gradient(135deg, #22c55e, #16a34a)",
-    border: "none",
-    padding: "10px 24px",
-    borderRadius: "100px",
-    color: "#fff",
-    fontSize: "0.9rem",
-    fontWeight: "600",
-    cursor: "pointer",
-    transition: "all 0.3s ease",
-  },
+  statValue: { fontSize: "1.5rem", fontWeight: 800, fontFamily: "'JetBrains Mono',monospace" },
+  statLabel: { fontSize: "0.65rem", color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.08em" },
+  scrollHint: { position: "absolute", bottom: 36, display: "flex", justifyContent: "center", width: "100%" },
+  scrollDot: { width: 10, height: 10, borderRadius: "50%", background: "rgba(34,197,94,0.6)", boxShadow: "0 0 14px rgba(34,197,94,0.5)" },
+};
 
-  // Hero Content
-  heroContent: {
-    position: "relative",
-    zIndex: 10,
-    textAlign: "center",
-    maxWidth: "900px",
-    padding: "0 24px",
-    paddingTop: "80px",
+const F = {
+  section: { padding: "110px 0", background: "linear-gradient(180deg,#030a0f 0%,#050e0a 100%)" },
+  inner: { maxWidth: 1200, margin: "0 auto", padding: "0 28px" },
+  head: { textAlign: "center", marginBottom: 56 },
+  pill: { ...cmn.pill },
+  title: { fontSize: "2.5rem", fontWeight: 800, color: "#fff", marginBottom: 14, letterSpacing: "-0.5px" },
+  sub: { fontSize: "1rem", color: "rgba(255,255,255,0.5)", maxWidth: 580, margin: "0 auto", lineHeight: 1.65 },
+  grid: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 18 },
+  card: {
+    border: "1px solid", borderRadius: 22, padding: "28px 26px",
+    transition: "all 0.3s ease", cursor: "default",
+    boxShadow: "0 4px 24px rgba(0,0,0,0.2)",
   },
-  heroBadge: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "8px",
-    background: "rgba(34,197,94,0.1)",
-    border: "1px solid rgba(34,197,94,0.2)",
-    padding: "8px 20px",
-    borderRadius: "100px",
-    fontSize: "0.85rem",
-    color: "#4ade80",
-    marginBottom: "24px",
-    animation: "slideDown 0.6s ease",
-  },
-  heroTitle: {
-    fontSize: "3.5rem",
-    fontWeight: "800",
-    lineHeight: 1.1,
-    margin: "0 0 20px",
-    color: "#fff",
-    animation: "slideUp 0.6s ease 0.1s both",
-  },
-  heroTitleGreen: {
-    background: "linear-gradient(135deg, #4ade80, #22c55e)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
-  },
-  heroSubtitle: {
-    fontSize: "1.15rem",
-    color: "rgba(255,255,255,0.7)",
-    lineHeight: 1.7,
-    maxWidth: "700px",
-    margin: "0 auto 32px",
-    animation: "slideUp 0.6s ease 0.2s both",
-  },
-  heroActions: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "20px",
-    marginBottom: "48px",
-    animation: "slideUp 0.6s ease 0.3s both",
-  },
-  heroCta: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "10px",
-    background: "linear-gradient(135deg, #22c55e, #16a34a)",
-    border: "none",
-    padding: "16px 32px",
-    borderRadius: "100px",
-    color: "#fff",
-    fontSize: "1rem",
-    fontWeight: "600",
-    cursor: "pointer",
-    boxShadow: "0 10px 40px rgba(34,197,94,0.3)",
-    transition: "all 0.3s ease",
-  },
-  heroCtaArrow: {
-    fontSize: "1.2rem",
-    transition: "transform 0.3s ease",
-  },
-  heroSecondary: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "8px",
-    color: "rgba(255,255,255,0.7)",
-    textDecoration: "none",
-    fontSize: "0.95rem",
-    fontWeight: "500",
-    padding: "16px 24px",
-    borderRadius: "100px",
-    border: "1px solid rgba(255,255,255,0.2)",
-    transition: "all 0.3s ease",
-  },
+  iconWrap: { width: 56, height: 56, borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 18 },
+  cardTitle: { fontSize: "1rem", fontWeight: 700, marginBottom: 10 },
+  cardDesc: { fontSize: "0.87rem", color: "rgba(255,255,255,0.5)", lineHeight: 1.65 },
+};
 
-  // Hero Stats
-  heroStats: {
-    display: "flex",
-    justifyContent: "center",
-    gap: "48px",
-    animation: "slideUp 0.6s ease 0.4s both",
+const R = {
+  section: { position: "relative", padding: "110px 0", background: "#040d12", overflow: "hidden" },
+  bgGlow: { position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "80%", height: "80%", background: "radial-gradient(ellipse,rgba(34,197,94,0.04) 0%,transparent 70%)", pointerEvents: "none" },
+  grid: { position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(34,197,94,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(34,197,94,0.02) 1px,transparent 1px)", backgroundSize: "60px 60px" },
+  inner: { maxWidth: 1200, margin: "0 auto", padding: "0 28px", display: "grid", gridTemplateColumns: "1fr 1.3fr", gap: 64, alignItems: "center", position: "relative", zIndex: 2 },
+  left: {},
+  pill: { ...cmn.pill },
+  title: { fontSize: "2.6rem", fontWeight: 800, color: "#fff", lineHeight: 1.15, marginBottom: 18, letterSpacing: "-0.8px" },
+  sub: { fontSize: "0.95rem", color: "rgba(255,255,255,0.55)", lineHeight: 1.7, marginBottom: 24 },
+  pills: { display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 28 },
+  tag: { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", padding: "5px 13px", borderRadius: 100, fontSize: "0.75rem", color: "rgba(255,255,255,0.6)" },
+  researchBadge: {
+    display: "flex", alignItems: "center", gap: 12,
+    background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.15)",
+    padding: "14px 18px", borderRadius: 14,
   },
-  heroStat: {
-    textAlign: "center",
+  right: {},
+  accCard: {
+    background: "rgba(255,255,255,0.025)", backdropFilter: "blur(16px)",
+    border: "1px solid rgba(255,255,255,0.08)", borderRadius: 22,
+    padding: "24px 20px",
   },
-  heroStatValue: {
-    fontSize: "2rem",
-    fontWeight: "700",
-    color: "#4ade80",
-    marginBottom: "4px",
-  },
-  heroStatLabel: {
-    fontSize: "0.8rem",
-    color: "rgba(255,255,255,0.5)",
-    textTransform: "uppercase",
-    letterSpacing: "1px",
-  },
+  accCardHeader: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 18, paddingBottom: 14, borderBottom: "1px solid rgba(255,255,255,0.06)" },
+  accCardTitle: { fontSize: "0.95rem", fontWeight: 700, color: "#fff" },
+  accCardSub: { fontSize: "0.72rem", color: "rgba(255,255,255,0.35)", fontFamily: "'JetBrains Mono',monospace" },
+  accNote: { fontSize: "0.68rem", color: "rgba(255,255,255,0.3)", marginTop: 14, textAlign: "center", lineHeight: 1.5 },
+};
 
-  // Scroll Indicator
-  scrollIndicator: {
-    position: "absolute",
-    bottom: "40px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "8px",
-    color: "rgba(255,255,255,0.4)",
-    fontSize: "0.75rem",
+const W = {
+  section: { padding: "110px 0", background: "#030a0f" },
+  inner: { maxWidth: 1200, margin: "0 auto", padding: "0 28px" },
+  head: { textAlign: "center", marginBottom: 56 },
+  pill: { ...cmn.pill },
+  title: { fontSize: "2.4rem", fontWeight: 800, color: "#fff", marginBottom: 14, letterSpacing: "-0.5px" },
+  sub: { fontSize: "1rem", color: "rgba(255,255,255,0.5)", maxWidth: 560, margin: "0 auto", lineHeight: 1.65 },
+  grid: { display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, position: "relative" },
+  card: {
+    background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)",
+    borderRadius: 20, padding: "32px 22px", textAlign: "center", position: "relative",
   },
-  scrollArrow: {
-    fontSize: "1.2rem",
-    color: "#4ade80",
+  stepNum: {
+    position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)",
+    background: "linear-gradient(135deg,#22c55e,#16a34a)",
+    padding: "4px 12px", borderRadius: 100, fontSize: "0.68rem", fontWeight: 800, color: "#fff",
+    boxShadow: "0 4px 14px rgba(34,197,94,0.35)",
   },
+  stepIcon: { fontSize: "2rem", marginBottom: 14, marginTop: 6 },
+  stepTitle: { fontSize: "0.95rem", fontWeight: 700, color: "#fff", marginBottom: 8 },
+  stepDesc: { fontSize: "0.83rem", color: "rgba(255,255,255,0.5)", lineHeight: 1.6 },
+  connector: { position: "absolute", right: -14, top: "50%", transform: "translateY(-50%)", color: "#22c55e", fontSize: "1.2rem", opacity: 0.5 },
+};
 
-  // Section Styles
-  sectionContainer: {
-    maxWidth: "1200px",
-    margin: "0 auto",
-    padding: "0 24px",
+const PV = {
+  section: { padding: "110px 0", background: "linear-gradient(180deg,#030a0f 0%,#050e0a 100%)" },
+  inner: { maxWidth: 1200, margin: "0 auto", padding: "0 28px" },
+  grid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "center" },
+  imgWrap: { position: "relative", borderRadius: 24, overflow: "visible" },
+  img: { width: "100%", height: 440, objectFit: "cover", borderRadius: 24, display: "block", boxShadow: "0 30px 80px rgba(0,0,0,0.5)" },
+  floatCard1: {
+    position: "absolute", bottom: 24, left: -20,
+    background: "rgba(3,10,15,0.9)", backdropFilter: "blur(20px)",
+    border: "1px solid rgba(34,197,94,0.2)", borderRadius: 16,
+    padding: "12px 16px", display: "flex", alignItems: "center", gap: 10,
+    boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
+    animation: "lp-float 4s ease-in-out infinite",
   },
-  sectionHeader: {
-    textAlign: "center",
-    marginBottom: "60px",
+  floatCard2: {
+    position: "absolute", top: 24, right: -20,
+    background: "rgba(3,10,15,0.9)", backdropFilter: "blur(20px)",
+    border: "1px solid rgba(99,102,241,0.2)", borderRadius: 16,
+    padding: "12px 16px", display: "flex", alignItems: "center", gap: 10,
+    boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
+    animation: "lp-float 5s ease-in-out infinite 1s",
   },
-  sectionBadge: {
-    display: "inline-block",
-    background: "rgba(34,197,94,0.1)",
-    border: "1px solid rgba(34,197,94,0.2)",
-    padding: "6px 16px",
-    borderRadius: "100px",
-    fontSize: "0.8rem",
-    color: "#4ade80",
-    marginBottom: "16px",
+  floatLabel: { fontSize: "0.65rem", color: "rgba(255,255,255,0.45)", marginBottom: 2 },
+  floatValue: { fontSize: "0.82rem", fontWeight: 600, color: "#fff" },
+  text: {},
+  pill: { ...cmn.pill },
+  title: { fontSize: "2.2rem", fontWeight: 800, color: "#fff", marginBottom: 16, letterSpacing: "-0.5px", lineHeight: 1.2 },
+  sub: { fontSize: "0.95rem", color: "rgba(255,255,255,0.55)", lineHeight: 1.7, marginBottom: 24 },
+  list: { listStyle: "none", padding: 0, marginBottom: 32 },
+  listItem: { display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 12 },
+  check: { color: "#22c55e", fontWeight: 700, marginTop: 1 },
+  cta: {
+    display: "inline-flex", alignItems: "center", gap: 10,
+    background: "linear-gradient(135deg,#22c55e,#16a34a)", border: "none",
+    padding: "14px 28px", borderRadius: 100, color: "#fff",
+    fontSize: "0.95rem", fontWeight: 700, cursor: "pointer",
+    boxShadow: "0 10px 30px rgba(34,197,94,0.3)",
   },
-  sectionTitle: {
-    fontSize: "2.5rem",
-    fontWeight: "700",
-    color: "#fff",
-    margin: "0 0 16px",
-  },
-  sectionSubtitle: {
-    fontSize: "1.05rem",
-    color: "rgba(255,255,255,0.6)",
-    maxWidth: "600px",
-    margin: "0 auto",
-    lineHeight: 1.6,
-  },
+};
 
-  // Features Section
-  featuresSection: {
-    padding: "100px 0",
-    background: "linear-gradient(180deg, #071018 0%, #0a1520 100%)",
+const CT = {
+  section: { position: "relative", padding: "100px 0", background: "linear-gradient(135deg,rgba(34,197,94,0.08),rgba(16,163,74,0.04))", borderTop: "1px solid rgba(34,197,94,0.1)", overflow: "hidden" },
+  glow: { position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "60%", height: "80%", background: "radial-gradient(ellipse,rgba(34,197,94,0.08) 0%,transparent 70%)", pointerEvents: "none" },
+  inner: { maxWidth: 700, margin: "0 auto", padding: "0 28px", textAlign: "center", position: "relative", zIndex: 2 },
+  badge: {
+    display: "inline-flex", alignItems: "center", gap: 8,
+    background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)",
+    padding: "8px 20px", borderRadius: 100, fontSize: "0.8rem", color: "#4ade80",
+    marginBottom: 24,
   },
-  featuresGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(3, 1fr)",
-    gap: "24px",
+  title: { fontSize: "2.8rem", fontWeight: 800, color: "#fff", marginBottom: 16, letterSpacing: "-0.8px" },
+  sub: { fontSize: "1rem", color: "rgba(255,255,255,0.6)", lineHeight: 1.7, marginBottom: 32 },
+  ctaRow: { marginBottom: 32 },
+  ctaBtn: {
+    display: "inline-flex", alignItems: "center", gap: 12,
+    background: "linear-gradient(135deg,#22c55e,#16a34a)", border: "none",
+    padding: "18px 42px", borderRadius: 100, color: "#fff",
+    fontSize: "1.05rem", fontWeight: 700, cursor: "pointer",
+    boxShadow: "0 12px 40px rgba(34,197,94,0.4)",
   },
-  featureCard: {
-    background: "rgba(255,255,255,0.02)",
-    border: "1px solid rgba(255,255,255,0.06)",
-    borderRadius: "20px",
-    padding: "32px",
-    transition: "all 0.3s ease",
-    cursor: "default",
+  stats: { display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap" },
+  stat: {
+    background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)",
+    padding: "6px 16px", borderRadius: 100, fontSize: "0.78rem", color: "rgba(255,255,255,0.55)",
   },
-  featureIconWrap: {
-    width: "60px",
-    height: "60px",
-    borderRadius: "16px",
-    border: "1px solid",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: "20px",
-  },
-  featureIcon: {
-    fontSize: "1.8rem",
-  },
-  featureTitle: {
-    fontSize: "1.15rem",
-    fontWeight: "600",
-    color: "#fff",
-    margin: "0 0 10px",
-  },
-  featureDesc: {
-    fontSize: "0.9rem",
-    color: "rgba(255,255,255,0.5)",
-    lineHeight: 1.6,
-    margin: 0,
-  },
+};
 
-  // How It Works Section
-  howSection: {
-    padding: "100px 0",
-    background: "#0a1520",
-  },
-  stepsGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
-    gap: "24px",
-    position: "relative",
-  },
-  stepCard: {
-    background: "rgba(255,255,255,0.02)",
-    border: "1px solid rgba(255,255,255,0.06)",
-    borderRadius: "20px",
-    padding: "32px 24px",
-    textAlign: "center",
-    position: "relative",
-    transition: "all 0.3s ease",
-  },
-  stepNumber: {
-    position: "absolute",
-    top: "-12px",
-    left: "50%",
-    transform: "translateX(-50%)",
-    background: "linear-gradient(135deg, #22c55e, #16a34a)",
-    padding: "4px 12px",
-    borderRadius: "100px",
-    fontSize: "0.7rem",
-    fontWeight: "700",
-    color: "#fff",
-  },
-  stepIconWrap: {
-    width: "70px",
-    height: "70px",
-    borderRadius: "50%",
-    background: "rgba(34,197,94,0.1)",
-    border: "1px solid rgba(34,197,94,0.2)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    margin: "0 auto 20px",
-  },
-  stepIcon: {
-    fontSize: "2rem",
-  },
-  stepTitle: {
-    fontSize: "1rem",
-    fontWeight: "600",
-    color: "#fff",
-    margin: "0 0 8px",
-  },
-  stepDesc: {
-    fontSize: "0.85rem",
-    color: "rgba(255,255,255,0.5)",
-    lineHeight: 1.5,
-    margin: 0,
-  },
-  stepConnector: {
-    position: "absolute",
-    right: "-20px",
-    top: "50%",
-    transform: "translateY(-50%)",
-    color: "#4ade80",
-    fontSize: "1.2rem",
-    opacity: 0.5,
-  },
-
-  // Preview Section
-  previewSection: {
-    padding: "100px 0",
-    background: "linear-gradient(180deg, #0a1520 0%, #071018 100%)",
-  },
-  previewContent: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "60px",
-    alignItems: "center",
-  },
-  previewText: {
-    textAlign: "left",
-  },
-  previewList: {
-    listStyle: "none",
-    padding: 0,
-    margin: "24px 0 32px",
-  },
-  previewItem: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    marginBottom: "16px",
-    fontSize: "0.95rem",
-    color: "rgba(255,255,255,0.7)",
-  },
-  previewCheck: {
-    color: "#4ade80",
-    fontWeight: "700",
-  },
-  previewImage: {
-    position: "relative",
-    borderRadius: "24px",
-    overflow: "hidden",
-  },
-  previewImg: {
-    width: "100%",
-    height: "400px",
-    objectFit: "cover",
-    borderRadius: "24px",
-  },
-  previewOverlay: {
-    position: "absolute",
-    bottom: "24px",
-    right: "24px",
-  },
-  previewCard: {
-    background: "rgba(7,16,24,0.9)",
-    backdropFilter: "blur(20px)",
-    border: "1px solid rgba(255,255,255,0.1)",
-    borderRadius: "16px",
-    padding: "16px 20px",
-    display: "flex",
-    alignItems: "center",
-    gap: "14px",
-    minWidth: "200px",
-  },
-  previewCardIcon: {
-    fontSize: "1.5rem",
-  },
-  previewCardTitle: {
-    fontSize: "0.7rem",
-    color: "rgba(255,255,255,0.5)",
-    marginBottom: "2px",
-  },
-  previewCardValue: {
-    fontSize: "0.9rem",
-    fontWeight: "600",
-    color: "#fff",
-  },
-
-  // CTA Section
-  ctaSection: {
-    padding: "80px 0",
-    background: "linear-gradient(135deg, rgba(34,197,94,0.1), rgba(16,163,74,0.05))",
-    borderTop: "1px solid rgba(34,197,94,0.1)",
-    borderBottom: "1px solid rgba(34,197,94,0.1)",
-  },
-  ctaContent: {
-    textAlign: "center",
-    maxWidth: "700px",
-    margin: "0 auto",
-    padding: "0 24px",
-  },
-  ctaTitle: {
-    fontSize: "2.2rem",
-    fontWeight: "700",
-    color: "#fff",
-    margin: "0 0 16px",
-  },
-  ctaSubtitle: {
-    fontSize: "1.05rem",
-    color: "rgba(255,255,255,0.6)",
-    margin: "0 0 32px",
-    lineHeight: 1.6,
-  },
-
-  // Footer
-  footer: {
-    padding: "48px 0",
-    background: "#071018",
-  },
-  footerContent: {
-    textAlign: "center",
-    maxWidth: "1200px",
-    margin: "0 auto",
-    padding: "0 24px",
-  },
-  footerBrand: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "10px",
-    marginBottom: "16px",
-  },
-  footerText: {
-    fontSize: "0.9rem",
-    color: "rgba(255,255,255,0.5)",
-    margin: "0 0 8px",
-  },
-  footerCopy: {
-    fontSize: "0.8rem",
-    color: "rgba(255,255,255,0.3)",
-    margin: 0,
-  },
+const FT = {
+  footer: { padding: "56px 0 40px", background: "#020609", borderTop: "1px solid rgba(255,255,255,0.05)" },
+  inner: { maxWidth: 1200, margin: "0 auto", padding: "0 28px", textAlign: "center" },
+  brand: { display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 16 },
+  brandText: { fontSize: "1.2rem", fontWeight: 700, color: "#fff" },
+  desc: { fontSize: "0.88rem", color: "rgba(255,255,255,0.4)", lineHeight: 1.7, marginBottom: 20 },
+  tags: { display: "flex", justifyContent: "center", gap: 8, flexWrap: "wrap", marginBottom: 28 },
+  tag: { background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.15)", padding: "4px 12px", borderRadius: 100, fontSize: "0.72rem", color: "rgba(74,222,128,0.7)" },
+  divider: { height: 1, background: "rgba(255,255,255,0.05)", marginBottom: 22 },
+  copy: { fontSize: "0.78rem", color: "rgba(255,255,255,0.25)" },
 };

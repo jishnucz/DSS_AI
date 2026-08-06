@@ -361,7 +361,7 @@ function SplashScreenFuturistic({ onComplete }) {
           <div style={styles.versionInfo}>
             <span>v2.0.0</span>
             <span style={styles.divider}>|</span>
-            <span>M.TECH RESEARCH</span>
+            <span>AI RESEARCH</span>
             <span style={styles.divider}>|</span>
             <span>ERA5 • 2010-2026</span>
           </div>

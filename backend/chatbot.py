@@ -8,7 +8,7 @@ import threading
 from bs4 import BeautifulSoup
 from PIL import Image
 import io
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 import nltk
 from nltk.tokenize import sent_tokenize, word_tokenize
 from collections import Counter
@@ -23,6 +23,7 @@ from sumy.summarizers.text_rank import TextRankSummarizer
 logging.basicConfig(level=logging.INFO, filename='chatbot.log', filemode='a',
                     format='%(asctime)s - %(levelname)s - %(name)s - %(message)s')
 logger = logging.getLogger(__name__)
+logger.propagate = False
 
 # prepare nltk data path
 nltk_data_path = os.path.expanduser('~/AppData/Roaming/nltk_data')
@@ -41,6 +42,9 @@ price_data = []
 PRICE_REFRESH_INTERVAL = 3600  # 1 hour
 MAX_RETRIES = 3
 RETRY_DELAY = 5
+REQUEST_TIMEOUT = 90  # Increased to 90 seconds for slow API responses
+EMPTY_PRICE_RETRY_INTERVAL = 900  # 15 minutes when upstream data is unavailable
+_last_empty_price_warning_ts = 0.0
 
 # BLIP model placeholders
 processor = None
@@ -90,7 +94,7 @@ def fetch_price_data():
     for attempt in range(MAX_RETRIES):
         try:
             logger.info(f"Fetching price data from: {PRICE_API_URL} (Attempt {attempt + 1}/{MAX_RETRIES})")
-            response = requests.get(PRICE_API_URL, timeout=30)
+            response = requests.get(PRICE_API_URL, timeout=REQUEST_TIMEOUT)
             logger.info(f"API Response Status: HTTP {response.status_code}")
             if response.status_code == 200:
                 data = response.json()
@@ -101,7 +105,9 @@ def fetch_price_data():
                     []
                 )
                 if not price_data:
-                    logger.warning("No price data found in API response. Keys available: " + ", ".join(data.keys()))
+                    logger.warning("No price records found in API response. Keys: " + ", ".join(data.keys()))
+                    if attempt < MAX_RETRIES - 1:
+                        time.sleep(RETRY_DELAY)
                     continue
                 logger.info(f"Price data fetched successfully: {len(price_data)} records")
                 return True
@@ -120,17 +126,24 @@ def fetch_price_data():
             if attempt < MAX_RETRIES - 1:
                 time.sleep(RETRY_DELAY)
             continue
-    logger.error("All retry attempts failed. Setting price_data to empty list.")
+    logger.warning("All retry attempts failed. Price data remains unavailable.")
     price_data = []
     return False
 
 
 def refresh_price_data_periodically():
+    global _last_empty_price_warning_ts
     while True:
-        fetch_price_data()
-        if not price_data:
-            logger.warning(f"Price data is empty after fetch. Will retry in {RETRY_DELAY} seconds.")
-            time.sleep(RETRY_DELAY)
+        success = fetch_price_data()
+        if not success or not price_data:
+            now = time.time()
+            # Throttle warning noise from upstream API that returns no records.
+            if now - _last_empty_price_warning_ts >= EMPTY_PRICE_RETRY_INTERVAL:
+                logger.warning(
+                    f"Price data unavailable. Next retry in {EMPTY_PRICE_RETRY_INTERVAL} seconds."
+                )
+                _last_empty_price_warning_ts = now
+            time.sleep(EMPTY_PRICE_RETRY_INTERVAL)
             continue
         time.sleep(PRICE_REFRESH_INTERVAL)
 

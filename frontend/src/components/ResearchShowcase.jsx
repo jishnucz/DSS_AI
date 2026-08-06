@@ -1,6 +1,6 @@
 /**
  * 🎓 Research Showcase Panel
- * Displays M.Tech research findings and methodology
+ * Displays advanced research findings and methodology
  * For panel presentation
  */
 
@@ -54,56 +54,73 @@ function ResearchShowcase() {
     }
   };
   
-  // Fallback data in case API is not running
+  // Research data — Ensemble Forecasting (matches Palakkad_Ensemble_Forecasting.ipynb)
   const fallbackData = {
-    title: "Research-Powered Agricultural Intelligence",
-    notebook: "AI_ML_Analysis_Enhanced_v2_FIXED.ipynb",
+    title: "Ensemble Crop Stress Forecasting with Live Weather",
+    notebook: "Palakkad_Ensemble_Forecasting.ipynb",
     key_metrics: {
-      data_observations: "140,000+",
-      time_period: "2010-2026",
-      data_source: "ERA5 Reanalysis",
-      models_tested: 10,
-      best_accuracy: "88.3%",
-      best_model: "Voting Ensemble"
+      data_observations: "77,360",
+      time_period: "1984–2026",
+      data_source: "ERA5 + Open-Meteo + soil/elevation",
+      models_tested: 6,
+      best_accuracy: "Stacking ensemble: 86.37% | LightGBM: 86.39% | BiLSTM: 84.93%",
+      best_model: "Stacking meta-learner (logistic regression over 6 models)"
     },
+    // Stress classification — 6 individual models + 2 ensembles
+    model_accuracies_c1: [
+      { name: "LightGBM",      accuracy: 0.8639, f1: 0.8656, auc: null, icon: "🏆" },
+      { name: "BiLSTM (attn)", accuracy: 0.8493, f1: 0.8511, auc: null, icon: "↔️" },
+      { name: "RandomForest",  accuracy: 0.8442, f1: 0.8470, auc: null, icon: "🌲" },
+      { name: "GRU",           accuracy: 0.8436, f1: 0.8441, auc: null, icon: "🧠" },
+      { name: "XGBoost",       accuracy: 0.8410, f1: 0.8437, auc: null, icon: "⚡" },
+      { name: "PatchTST",      accuracy: 0.8147, f1: 0.8160, auc: null, icon: "⚙️" }
+    ],
+    // Ensembles + weather Seq2Seq
+    model_accuracies_c2: [
+      { name: "Stacking Ensemble (final)", accuracy: 0.8637, f1: 0.8651, auc: null, icon: "🎯" },
+      { name: "Soft-voting Ensemble",      accuracy: 0.8588, f1: 0.8607, auc: null, icon: "🗳" },
+      { name: "WeatherSeq2Seq LSTM (Tmax MAE 1.20°C d+1)", accuracy: null, f1: null, auc: null, icon: "🌤" }
+    ],
+    // Legacy field
     model_accuracies: [
-      { name: "Voting Ensemble", accuracy: 0.883, icon: "🏆" },
-      { name: "LSTM", accuracy: 0.874, icon: "🧠" },
-      { name: "Random Forest", accuracy: 0.852, icon: "🌲" },
-      { name: "Extra Trees", accuracy: 0.846, icon: "🌳" },
-      { name: "Gradient Boosting", accuracy: 0.838, icon: "📈" },
-      { name: "MLP", accuracy: 0.821, icon: "🔮" },
-      { name: "SVM", accuracy: 0.815, icon: "📊" },
-      { name: "AdaBoost", accuracy: 0.793, icon: "🚀" },
-      { name: "KNN", accuracy: 0.789, icon: "🎯" },
-      { name: "Naive Bayes", accuracy: 0.742, icon: "📌" }
+      { name: "Stacking Ensemble", accuracy: 0.8637, icon: "🎯" },
+      { name: "LightGBM",          accuracy: 0.8639, icon: "🏆" },
+      { name: "BiLSTM (attn)",     accuracy: 0.8493, icon: "↔️" },
+      { name: "RandomForest",      accuracy: 0.8442, icon: "🌲" },
+      { name: "GRU",               accuracy: 0.8436, icon: "🧠" },
+      { name: "XGBoost",           accuracy: 0.8410, icon: "⚡" },
+      { name: "PatchTST",          accuracy: 0.8147, icon: "⚙️" }
     ],
     feature_importance: [
-      { feature: "Temperature", importance: 0.342, rank: 1 },
-      { feature: "Soil Moisture", importance: 0.289, rank: 2 },
-      { feature: "Precipitation", importance: 0.178, rank: 3 },
-      { feature: "Wind Speed", importance: 0.112, rank: 4 },
-      { feature: "Pressure", importance: 0.079, rank: 5 }
+      { feature: "precipitation_sum",     importance: 0.450, rank: 1 },
+      { feature: "temperature_2m_max",    importance: 0.168, rank: 2 },
+      { feature: "temperature_2m_min",    importance: 0.128, rank: 3 },
+      { feature: "soil_moisture (0-7cm)", importance: 0.090, rank: 4 },
+      { feature: "dry_streak",            importance: 0.060, rank: 5 },
+      { feature: "swb_norm",              importance: 0.052, rank: 6 }
     ],
+    // Weather forecast MAE in °C (Tmax) — lower = better
     forecast_horizons: [
-      { days: 1, accuracy: 0.883, label: "Next Day" },
-      { days: 3, accuracy: 0.821, label: "3-Day" },
-      { days: 7, accuracy: 0.764, label: "Week Ahead" }
+      { days: 1, accuracy: 1.20, label: "d+1" },
+      { days: 3, accuracy: 1.49, label: "d+3" },
+      { days: 7, accuracy: 1.73, label: "d+7" }
     ],
     coverage: {
-      district: "Regional Coverage",
-      state: "South India",
+      district: "Palakkad District",
+      state: "Kerala",
       taluks: 13,
       area_km2: 4480,
       crops: 63
     },
     unique_features: [
-      "Real-time ensemble predictions from 8 ML models",
-      "SHAP-based explainability",
-      "Bootstrap confidence intervals",
-      "Climate projection scenarios",
-      "3D geographic visualization",
-      "Multi-language support"
+      "CCSI: Novel Composite Crop Stress Index (KAU thresholds)",
+      "25-feature engineering: SWB, heat_stress, rain_7d, dry_streak, crop_et, vpd_x_heat, sm_gradient, cyclic season",
+      "4-paradigm comparison: Statistical → ML → DL → Transformer",
+      "7-day multi-step forecast (LightGBM + TST)",
+      "SHAP explainability with TreeSHAP",
+      "Q-Learning irrigation policy (RL)",
+      "Continuous learning with Page-Hinkley drift detection",
+      "Mann-Kendall climate trend analysis (2005–2026)"
     ]
   };
   
@@ -125,7 +142,7 @@ function ResearchShowcase() {
           <div>
             <h2 style={styles.headerTitle}>{d.title}</h2>
             <p style={styles.headerSubtitle}>
-              M.Tech Research | {d.notebook}
+              AI Research | {d.notebook}
             </p>
           </div>
         </div>

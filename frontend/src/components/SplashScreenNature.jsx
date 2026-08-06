@@ -268,7 +268,7 @@ export default function SplashScreenNature({ onComplete }) {
           <div style={styles.dataDivider} />
           <div style={styles.dataPoint}>
             <span style={styles.dataIcon}>🗺️</span>
-            <span style={styles.dataLabel}>13 Taluks</span>
+            <span style={styles.dataLabel}>5 Taluks</span>
           </div>
           <div style={styles.dataDivider} />
           <div style={styles.dataPoint}>
@@ -279,7 +279,7 @@ export default function SplashScreenNature({ onComplete }) {
 
         {/* Footer */}
         <p style={styles.footer}>
-          M.Tech Research Project • ERA5 Climate Intelligence
+          AI Research Project • ERA5 Climate Intelligence
         </p>
       </div>
 

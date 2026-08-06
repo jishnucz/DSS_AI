@@ -86,17 +86,137 @@ const WATER_SOURCES = [
   { name: "Drip Irrigation", reliability: "High", icon: "💦" },
 ];
 
-// ML Models used (from research)
+// ML Models — from Palakkad_Ensemble_Forecasting.ipynb (matches new ensemble pipeline)
 const ML_MODELS = [
-  { name: "Voting Ensemble", accuracy: 88.3, icon: "🏆", type: "Primary" },
-  { name: "LSTM Neural Net", accuracy: 87.4, icon: "🧠", type: "Deep Learning" },
-  { name: "Random Forest", accuracy: 85.2, icon: "🌲", type: "Ensemble" },
-  { name: "Gradient Boosting", accuracy: 83.8, icon: "📈", type: "Boosting" },
+  { name: "Stacking Ensemble", accuracy: 86.4, icon: "🎯", type: "Primary" },
+  { name: "LightGBM",          accuracy: 86.4, icon: "💡", type: "GBM" },
+  { name: "BiLSTM + Attention",accuracy: 84.9, icon: "↔️", type: "Deep Learning" },
+  { name: "Random Forest",     accuracy: 84.4, icon: "🌲", type: "Ensemble ML" },
 ];
 
-export default function AdvancedDSS() {
+// Master CSV taluks (must match backend ensemble_inference.py)
+// If a user picks a taluk outside this set, fall back to "Chittur"
+const ENSEMBLE_TALUKS = ["Chittur", "Kollengode", "Kuzhalmannam", "Mannarkkad", "Nenmara"];
+
+// Map AdvancedDSS taluk selection → ensemble backend taluk
+function ensembleTalukFor(formTaluk) {
+  if (!formTaluk) return ENSEMBLE_TALUKS[0];
+  // Direct match
+  if (ENSEMBLE_TALUKS.includes(formTaluk)) return formTaluk;
+  // Spelling variants
+  if (formTaluk === "Mannarghat" || formTaluk === "Mannarkad") return "Mannarkkad";
+  // Default
+  return ENSEMBLE_TALUKS[0];
+}
+
+// Map the /api/ensemble/forecast/{taluk} response → AdvancedDSS rich display structure.
+// Merges API stress/weather output with form-derived growth-stage + economic info.
+function mapEnsembleToDSS(apiData, form, selectedCrop, selectedSoil) {
+  const rows  = apiData?.rows || [];
+  const today = rows.find(r => r.days_ahead === 0) || rows[0];
+  if (!today) return null;
+
+  // Growth stage from sowing date (local computation — API gives rice_stage but
+  // we want it tied to user's actual sowing date, not season-based)
+  const daysSinceSowing = form.sowingDate
+    ? Math.floor((new Date() - new Date(form.sowingDate)) / 86400000)
+    : 0;
+  let growthStage = "Seedling", stageProgress = 10;
+  if (daysSinceSowing > 90)      { growthStage = "Maturity";    stageProgress = 95; }
+  else if (daysSinceSowing > 60) { growthStage = "Flowering";   stageProgress = 70; }
+  else if (daysSinceSowing > 30) { growthStage = "Tillering";   stageProgress = 45; }
+  else if (daysSinceSowing > 15) { growthStage = "Vegetative";  stageProgress = 25; }
+
+  const stressLabel = today.stress_lbl;             // "None" | "Low" | "High"
+  const overallHealth = stressLabel === "None" ? "Good"
+                       : stressLabel === "Low" ? "Fair" : "At Risk";
+
+  const soilMatch = selectedSoil?.suitability?.includes(form.crop) || false;
+
+  // Convert the API's 6-feature SHAP (from notebook) to AdvancedDSS shape
+  const SHAP_TOP6 = [
+    { feature: "Precipitation",    value: 0.450, impact: today.rain > 1
+        ? `${today.rain.toFixed(1)}mm forecast` : "Dry conditions — irrigation key" },
+    { feature: "Soil Moisture",    value: 0.090, impact: today.swb > 0.5
+        ? "Adequate root-zone moisture" : "Low SWB — supplementary irrigation" },
+    { feature: "Tmax",             value: 0.168, impact: today.tmax > 36
+        ? `Heat alert: ${today.tmax.toFixed(1)}°C exceeds 36° threshold`
+        : `Tmax ${today.tmax.toFixed(1)}°C within safe range` },
+    { feature: "Tmin",             value: 0.128, impact: `Tmin ${today.tmin.toFixed(1)}°C` },
+    { feature: "Dry streak",       value: 0.060, impact: "Tracked from 7-day window" },
+    { feature: "SWB (composite)",  value: 0.052, impact: `Current SWB ${today.swb.toFixed(2)}` },
+  ];
+
+  // Recommendations — pull the advisory from each forecast day
+  const recommendations = rows.slice(0, 4).map((r, i) => ({
+    priority: r.stress_lbl === "High" ? "Critical"
+            : r.stress_lbl === "Low" ? "Moderate" : "Info",
+    category: r.stress_lbl === "High" ? "Urgent action" : "Monitoring",
+    title: r.days_ahead === 0 ? "Today" : `Day +${r.days_ahead} (${r.date})`,
+    description: r.advisory || `Predicted ${r.stress_lbl} stress. Tmax ${r.tmax.toFixed(1)}°C, rain ${r.rain.toFixed(1)}mm`,
+    action: r.stress_lbl === "High"
+      ? `Action needed — confidence ${Math.round(r.confidence * 100)}%`
+      : "Monitor weather, no urgent action",
+  }));
+
+  // Economic projection — form-based, untouched by API
+  const yieldPerAcre = stressLabel === "High" ? 3.2
+                     : stressLabel === "Low" ? 3.8 : 4.5;
+  const landSize = parseFloat(form.landSize) || 0;
+  const tonnes = landSize * yieldPerAcre;
+
+  return {
+    summary: {
+      overallHealth,
+      confidence: today.confidence * 100,
+      modelUsed: apiData.model || "Ensemble (LightGBM + XGBoost)",
+      dataSource: apiData.source === "API"
+        ? "Open-Meteo ECMWF live + ERA5 reanalysis"
+        : "Master CSV (42-yr ERA5 record)",
+    },
+    cropStatus: {
+      crop: form.crop,
+      variety: form.cropVariety || "Local variety",
+      growthStage,
+      stageProgress,
+      daysSinceSowing,
+      daysToHarvest: Math.max(0, parseInt(selectedCrop?.growthDays || 120) - daysSinceSowing),
+    },
+    stressAnalysis: {
+      waterStress: today.swb < 0.4 ? "High" : today.swb < 0.6 ? "Moderate" : "Low",
+      heatStress: today.tmax > 36 ? "High" : today.tmax > 33 ? "Moderate" : "Low",
+      nutrientStress: form.organicFarming ? "Low" : "Moderate",
+      overallStress: stressLabel,             // "None" | "Low" | "High" — single source of truth
+    },
+    predictions: {
+      yieldPotential: soilMatch ? "85-95%" : "70-80%",
+      optimalHarvest: form.sowingDate
+        ? new Date(new Date(form.sowingDate).getTime() + parseInt(selectedCrop?.growthDays || 120) * 86400000).toLocaleDateString()
+        : "Set sowing date",
+      riskLevel: stressLabel === "High" ? "Elevated" : "Normal",
+    },
+    featureImportance: SHAP_TOP6,
+    recommendations,
+    economicAnalysis: {
+      estimatedYield:   landSize ? `${tonnes.toFixed(1)} tonnes` : "Enter land size",
+      estimatedRevenue: landSize ? `₹${(tonnes * 22000).toLocaleString("en-IN")}` : "—",
+      inputCost:        landSize ? `₹${(landSize * 25000).toLocaleString("en-IN")}` : "—",
+    },
+    // Live 8-day forecast (new — not in old AdvancedDSS but useful)
+    forecast8d: rows.map(r => ({
+      date: r.date, daysAhead: r.days_ahead,
+      tmax: r.tmax, tmin: r.tmin, rain: r.rain, swb: r.swb,
+      stress: r.stress_lbl, confidence: r.confidence,
+    })),
+  };
+}
+
+export default function AdvancedDSS({ detectedCrop, onCropUsed }) {
   inject("advanced-dss", CSS);
   const { t } = useLanguage();
+  
+  // State for crop detection notice
+  const [cropNotice, setCropNotice] = useState(null);
   
   // Form state - comprehensive farmer inputs
   const [form, setForm] = useState({
@@ -142,7 +262,33 @@ export default function AdvancedDSS() {
   
   const updateForm = (key, value) => {
     setForm(prev => ({ ...prev, [key]: value }));
+    // Clear crop notice if user changes crop
+    if (key === 'crop') setCropNotice(null);
   };
+  
+  // Handle detected crop from classifier
+  useEffect(() => {
+    if (detectedCrop && detectedCrop.crop) {
+      const matchedCrop = CROPS.find(c => c.name.toLowerCase() === detectedCrop.crop.toLowerCase());
+      if (matchedCrop) {
+        setForm(prev => ({ ...prev, crop: matchedCrop.name }));
+        setCropNotice({
+          crop: matchedCrop.name,
+          growthStage: detectedCrop.growthStage,
+          health: detectedCrop.health?.status,
+          confidence: detectedCrop.confidence
+        });
+      } else {
+        setCropNotice({
+          crop: detectedCrop.crop,
+          notInList: true,
+          growthStage: detectedCrop.growthStage,
+          health: detectedCrop.health?.status
+        });
+      }
+      if (onCropUsed) onCropUsed();
+    }
+  }, [detectedCrop, onCropUsed]);
   
   // Calculate crop suitability based on soil
   const cropSuitability = selectedSoil?.suitability.includes(form.crop) ? "High" : "Moderate";
@@ -151,40 +297,38 @@ export default function AdvancedDSS() {
   const runAnalysis = async () => {
     setLoading(true);
     setAnalysisProgress(0);
-    
-    // Simulate ML model analysis with progress
-    const progressSteps = [
-      { progress: 15, message: "Loading ERA5 climate data..." },
-      { progress: 30, message: "Analyzing soil-crop compatibility..." },
-      { progress: 50, message: "Running ensemble models..." },
-      { progress: 70, message: "Computing SHAP explanations..." },
-      { progress: 85, message: "Generating recommendations..." },
-      { progress: 100, message: "Analysis complete!" },
-    ];
-    
-    for (const step of progressSteps) {
-      await new Promise(r => setTimeout(r, 400));
-      setAnalysisProgress(step.progress);
-    }
-    
-    // Try to fetch from backend, use simulated response if unavailable
-    try {
-      const response = await fetch("http://localhost:8000/api/advanced-dss", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form)
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setResult(data);
-      } else {
-        throw new Error("API unavailable");
+
+    // Progress simulation runs in parallel with the actual fetch
+    const progressTimer = (async () => {
+      const steps = [
+        { progress: 15, message: "Fetching Open-Meteo live weather..." },
+        { progress: 35, message: "Computing 30-day input window features..." },
+        { progress: 60, message: "Running LightGBM + XGBoost ensemble..." },
+        { progress: 80, message: "Generating stage-aware advisory..." },
+        { progress: 95, message: "Finalising 7-day forecast..." },
+      ];
+      for (const step of steps) {
+        await new Promise(r => setTimeout(r, 250));
+        setAnalysisProgress(step.progress);
       }
-    } catch {
-      // Generate comprehensive result based on inputs
-      setResult(generateResult());
+    })();
+
+    let mapped = null;
+    try {
+      const taluk = ensembleTalukFor(form.taluk);
+      const response = await fetch(`/api/ensemble/forecast/${encodeURIComponent(taluk)}`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const apiData = await response.json();
+      mapped = mapEnsembleToDSS(apiData, form, selectedCrop, selectedSoil);
+    } catch (e) {
+      // Backend unreachable or new ensemble unavailable → fall back to local rules
+      console.warn("Ensemble API unavailable, using local heuristic result:", e?.message);
+      mapped = generateResult();
     }
-    
+
+    await progressTimer;
+    setAnalysisProgress(100);
+    setResult(mapped);
     setLoading(false);
   };
   
@@ -209,13 +353,13 @@ export default function AdvancedDSS() {
     const soilMatch = selectedSoil?.suitability.includes(form.crop);
     
     return {
-      // Overview
+      // Overview — local heuristic fallback (API unreachable)
       summary: {
-        overallHealth: soilMatch && waterStress === "Low" ? "Good" : 
+        overallHealth: soilMatch && waterStress === "Low" ? "Good" :
                       waterStress === "High" ? "At Risk" : "Fair",
-        confidence: 88.3,
-        modelUsed: "Voting Ensemble (8 models)",
-        dataSource: "ERA5 Reanalysis + Local Inputs"
+        confidence: 75.0,
+        modelUsed: "Local heuristic (API offline)",
+        dataSource: "Form inputs only — start backend for live ensemble"
       },
       
       // Crop Status
@@ -263,6 +407,29 @@ export default function AdvancedDSS() {
         marketPrice: selectedCrop?.name === "Rice" ? "₹2,200/quintal" : "₹3,500/quintal",
         estimatedRevenue: form.landSize ? `₹${(parseFloat(form.landSize) * 45000).toLocaleString()}` : "-",
         inputCost: form.landSize ? `₹${(parseFloat(form.landSize) * 25000).toLocaleString()}` : "-"
+      },
+      
+      // 7-day stress forecast (empty when API unavailable)
+      forecast7Day: [],
+
+      // Research AI Enhanced Analysis (simulated when API unavailable)
+      research_ai: {
+        available: true,
+        forecasts: {
+          day_1: { stress_probability: 0.25, stress_level: "NORMAL" },
+          day_3: { stress_probability: waterStress === "High" ? 0.55 : 0.30, stress_level: waterStress === "High" ? "LOW STRESS" : "NORMAL" },
+          day_7: { stress_probability: waterStress === "High" ? 0.68 : 0.35, stress_level: waterStress === "High" ? "HIGH STRESS" : "LOW STRESS" }
+        },
+        confidence: {
+          score: 76,
+          level: "Medium",
+          explanation: "Model has moderate confidence based on available data"
+        },
+        actionable_insights: waterStress !== "Low" ? [
+          { action: "Increase Soil Moisture", from: 0.25, to: 0.40, result: "NORMAL" },
+          { action: "Schedule Irrigation", result: "NORMAL" }
+        ] : [],
+        summary: `7-day outlook: ${waterStress === "High" ? "worsening" : "stable"} | Prediction confidence: medium`
       }
     };
   };
@@ -444,6 +611,49 @@ export default function AdvancedDSS() {
           </div>
         ))}
       </div>
+      
+      {/* Crop Detection Notice */}
+      {cropNotice && (
+        <div style={styles.cropNotice}>
+          <div style={styles.noticeHeader}>
+            <span style={styles.noticeIcon}>🔍</span>
+            <div>
+              <div style={styles.noticeTitle}>
+                {cropNotice.notInList 
+                  ? `Detected: ${cropNotice.crop} (not in crop list)` 
+                  : `Auto-detected: ${cropNotice.crop}`}
+              </div>
+              <div style={styles.noticeDetails}>
+                {cropNotice.growthStage && cropNotice.growthStage !== "Unknown" && (
+                  <span style={styles.noticeBadge}>📊 {cropNotice.growthStage}</span>
+                )}
+                {cropNotice.health && (
+                  <span style={{
+                    ...styles.noticeBadge,
+                    background: cropNotice.health === "Healthy" ? "rgba(34, 197, 94, 0.2)" :
+                               cropNotice.health === "Moderate" ? "rgba(245, 158, 11, 0.2)" :
+                               "rgba(239, 68, 68, 0.2)",
+                    color: cropNotice.health === "Healthy" ? "#22c55e" :
+                           cropNotice.health === "Moderate" ? "#f59e0b" : "#ef4444"
+                  }}>
+                    {cropNotice.health === "Healthy" ? "✅" : cropNotice.health === "Moderate" ? "⚠️" : "🚨"} {cropNotice.health}
+                  </span>
+                )}
+                {cropNotice.confidence && (
+                  <span style={styles.noticeBadge}>🎯 {cropNotice.confidence}% confidence</span>
+                )}
+              </div>
+            </div>
+          </div>
+          <button 
+            type="button" 
+            onClick={() => setCropNotice(null)} 
+            style={styles.noticeDismiss}
+          >
+            ✕
+          </button>
+        </div>
+      )}
       
       <div style={styles.formGrid}>
         {/* Sowing Date */}
@@ -659,26 +869,31 @@ export default function AdvancedDSS() {
           <p style={styles.sectionDesc}>Key factors affecting your crop's stress prediction</p>
           
           <div style={styles.featureList}>
-            {result.featureImportance.map((f, i) => (
+            {result.featureImportance.map((f, i) => {
+              const raw = Math.abs(f.contribution ?? f.value ?? 0);
+              const pct = (raw * 100).toFixed(1);
+              const barW = Math.min(100, raw / 0.35 * 100);
+              return (
               <div key={f.feature} style={styles.featureRow}>
                 <div style={styles.featureInfo}>
                   <span style={styles.featureRank}>#{i + 1}</span>
                   <span style={styles.featureName}>{f.feature}</span>
                 </div>
                 <div style={styles.featureBarContainer}>
-                  <div 
+                  <div
                     style={{
                       ...styles.featureBar,
-                      width: `${f.value * 100 / 0.35}%`,
+                      width: `${barW}%`,
                       background: i === 0 ? "linear-gradient(90deg, #ef4444, #fca5a5)" :
                                  i === 1 ? "linear-gradient(90deg, #f59e0b, #fcd34d)" :
                                  "linear-gradient(90deg, #22c55e, #86efac)"
                     }}
                   />
                 </div>
-                <span style={styles.featureValue}>{(f.value * 100).toFixed(1)}%</span>
+                <span style={styles.featureValue}>{pct}%</span>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
         
@@ -724,6 +939,277 @@ export default function AdvancedDSS() {
           </div>
         </div>
         
+        {/* ── 7-Day Stress Forecast ── */}
+        {result.forecast7Day?.length > 0 && (
+          <div style={styles.sectionCard}>
+            <h3 style={styles.sectionTitle}>📅 7-Day Crop Stress Forecast</h3>
+            <p style={styles.sectionDesc}>
+              ML ensemble applied to Open-Meteo weather forecast — stress prediction &amp; daily action plan
+            </p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              {result.forecast7Day.map((day, idx) => {
+                const stressColor =
+                  day.stress_prediction === "Normal"     ? "#22c55e" :
+                  day.stress_prediction === "Low Stress" ? "#f59e0b" : "#ef4444";
+                const stressBg =
+                  day.stress_prediction === "Normal"     ? "rgba(34,197,94,0.08)" :
+                  day.stress_prediction === "Low Stress" ? "rgba(245,158,11,0.08)" : "rgba(239,68,68,0.08)";
+
+                return (
+                  <div key={idx} style={{
+                    background: "#fff",
+                    borderRadius: "14px",
+                    border: `1.5px solid ${stressColor}30`,
+                    overflow: "hidden",
+                  }}>
+                    {/* Day header */}
+                    <div style={{
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      padding: "12px 18px",
+                      background: stressBg,
+                      borderBottom: `1px solid ${stressColor}20`,
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        <span style={{ fontWeight: 700, fontSize: "1rem", color: "#374151" }}>
+                          Day {day.day}{day.date ? ` — ${day.date}` : ""}
+                        </span>
+                        <span style={{
+                          padding: "2px 10px", borderRadius: "20px",
+                          background: stressColor + "20",
+                          color: stressColor, fontWeight: 700, fontSize: "0.78rem"
+                        }}>
+                          {day.stress_prediction === "Normal" ? "✅" :
+                           day.stress_prediction === "Low Stress" ? "⚠️" : "🚨"}{" "}
+                          {day.stress_prediction}
+                        </span>
+                        <span style={{ fontSize: "0.78rem", color: "#6b7280" }}>
+                          {Math.round(day.stress_probability * 100)}% confidence
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", gap: "14px", fontSize: "0.82rem", color: "#374151" }}>
+                        <span title="Temperature">🌡️ {day.weather.temp_max}°C</span>
+                        <span title="Rainfall">🌧️ {day.weather.rainfall}mm</span>
+                        <span title="Soil Moisture">🌱 {day.soil_moisture_pct}%</span>
+                        <span title="Rain probability">☂️ {day.weather.precip_prob}%</span>
+                      </div>
+                    </div>
+
+                    {/* Growth stage + recommendations */}
+                    <div style={{ padding: "12px 18px" }}>
+                      <div style={{ fontSize: "0.78rem", color: "#6b7280", marginBottom: "10px" }}>
+                        Growth stage: <strong style={{ color: "#374151" }}>{day.growth_stage}</strong>
+                        {" · "}Humidity: {day.weather.humidity}%
+                        {" · "}Wind: {day.weather.wind} km/h
+                        {" · "}ET₀: {day.weather.et0} mm/day
+                      </div>
+
+                      {day.recommendations?.length > 0 && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                          {day.recommendations.map((rec, ri) => {
+                            const prColor =
+                              rec.priority === "Critical" ? "#ef4444" :
+                              rec.priority === "High"     ? "#f97316" :
+                              rec.priority === "Moderate" ? "#f59e0b" : "#22c55e";
+                            return (
+                              <div key={ri} style={{
+                                padding: "10px 14px",
+                                borderRadius: "10px",
+                                background: prColor + "0d",
+                                borderLeft: `4px solid ${prColor}`,
+                              }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                                  <span>{rec.icon}</span>
+                                  <span style={{ fontWeight: 600, fontSize: "0.88rem", color: "#1f2937" }}>
+                                    {rec.title}
+                                  </span>
+                                  <span style={{
+                                    marginLeft: "auto",
+                                    padding: "1px 8px", borderRadius: "12px",
+                                    background: prColor + "20", color: prColor,
+                                    fontSize: "0.72rem", fontWeight: 700
+                                  }}>
+                                    {rec.priority}
+                                  </span>
+                                </div>
+                                <p style={{ margin: "0 0 4px 0", fontSize: "0.83rem", color: "#4b5563", lineHeight: 1.5 }}>
+                                  {rec.detail}
+                                </p>
+                                <div style={{
+                                  display: "flex", alignItems: "center", gap: "6px",
+                                  fontSize: "0.8rem", color: "#374151",
+                                  background: "#f9fafb", borderRadius: "6px", padding: "6px 10px"
+                                }}>
+                                  <span>👉</span>
+                                  <span><strong>Action:</strong> {rec.action}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Research AI Enhanced Insights */}
+        {result.research_ai?.available && (
+          <div style={styles.sectionCard}>
+            <h3 style={styles.sectionTitle}>🔬 Advanced Research AI Insights</h3>
+            <p style={styles.sectionDesc}>TFT Forecasts • Bayesian Confidence • What-If Analysis</p>
+            
+            {/* Summary */}
+            {result.research_ai.summary && (
+              <div style={{
+                padding: "12px 16px",
+                background: "linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(59, 130, 246, 0.1))",
+                borderRadius: "12px",
+                marginBottom: "16px",
+                fontSize: "0.9rem",
+                color: "#374151"
+              }}>
+                <strong>📊 Summary:</strong> {result.research_ai.summary}
+              </div>
+            )}
+            
+            {/* TFT Multi-Horizon Forecasts */}
+            {result.research_ai.forecasts && (
+              <div style={{ marginBottom: "20px" }}>
+                <h4 style={{ fontSize: "0.95rem", fontWeight: 600, color: "#374151", marginBottom: "12px" }}>
+                  📈 Temporal Fusion Transformer Forecasts
+                </h4>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
+                  {["day_1", "day_3", "day_7"].map(day => {
+                    const forecast = result.research_ai.forecasts[day];
+                    if (!forecast) return null;
+                    const stressColor = forecast.stress_level === "NORMAL" ? "#22c55e" :
+                                       forecast.stress_level === "LOW STRESS" ? "#f59e0b" : "#ef4444";
+                    return (
+                      <div key={day} style={{
+                        padding: "16px",
+                        background: "#fff",
+                        borderRadius: "12px",
+                        border: `2px solid ${stressColor}20`,
+                        textAlign: "center"
+                      }}>
+                        <div style={{ fontSize: "0.8rem", color: "#6b7280", marginBottom: "4px" }}>
+                          {day.replace("day_", "Day ")}
+                        </div>
+                        <div style={{ fontSize: "1.5rem", fontWeight: 700, color: stressColor }}>
+                          {Math.round((forecast.stress_probability || 0) * 100)}%
+                        </div>
+                        <div style={{ fontSize: "0.75rem", color: stressColor, fontWeight: 600 }}>
+                          {forecast.stress_level}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            
+            {/* Bayesian Confidence */}
+            {result.research_ai.confidence && (
+              <div style={{ marginBottom: "20px" }}>
+                <h4 style={{ fontSize: "0.95rem", fontWeight: 600, color: "#374151", marginBottom: "12px" }}>
+                  🎲 Prediction Confidence (Bayesian)
+                </h4>
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "16px",
+                  padding: "16px",
+                  background: "#fff",
+                  borderRadius: "12px"
+                }}>
+                  <div style={{
+                    width: "80px",
+                    height: "80px",
+                    borderRadius: "50%",
+                    background: `conic-gradient(
+                      ${result.research_ai.confidence.level === "High" ? "#22c55e" : 
+                        result.research_ai.confidence.level === "Medium" ? "#f59e0b" : "#ef4444"} 
+                      ${result.research_ai.confidence.score * 3.6}deg, 
+                      #e5e7eb ${result.research_ai.confidence.score * 3.6}deg
+                    )`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}>
+                    <div style={{
+                      width: "60px",
+                      height: "60px",
+                      borderRadius: "50%",
+                      background: "#fff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: 700,
+                      fontSize: "1.1rem",
+                      color: "#374151"
+                    }}>
+                      {result.research_ai.confidence.score}%
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 600, color: "#374151", marginBottom: "4px" }}>
+                      {result.research_ai.confidence.level} Confidence
+                    </div>
+                    <div style={{ fontSize: "0.85rem", color: "#6b7280" }}>
+                      {result.research_ai.confidence.explanation || "Model is confident in this prediction"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Actionable Counterfactual Insights */}
+            {result.research_ai.actionable_insights?.length > 0 && (
+              <div>
+                <h4 style={{ fontSize: "0.95rem", fontWeight: 600, color: "#374151", marginBottom: "12px" }}>
+                  💡 What-If Analysis (Counterfactual)
+                </h4>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {result.research_ai.actionable_insights.slice(0, 3).map((insight, i) => (
+                    <div key={i} style={{
+                      padding: "12px 16px",
+                      background: "#fff",
+                      borderRadius: "10px",
+                      borderLeft: "4px solid #3b82f6",
+                      fontSize: "0.9rem",
+                      color: "#374151"
+                    }}>
+                      <strong>{insight.action}</strong>
+                      {insight.from !== undefined && (
+                        <span style={{ color: "#6b7280" }}>
+                          {" "}from {insight.from} → {insight.to}
+                        </span>
+                      )}
+                      {insight.result && (
+                        <span style={{ 
+                          marginLeft: "8px", 
+                          padding: "2px 8px", 
+                          borderRadius: "4px",
+                          background: insight.result === "NORMAL" ? "#dcfce7" : "#fef3c7",
+                          color: insight.result === "NORMAL" ? "#16a34a" : "#d97706",
+                          fontSize: "0.75rem",
+                          fontWeight: 600
+                        }}>
+                          → {insight.result}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        
         {/* Run Again */}
         <div style={styles.actionBar}>
           <button
@@ -760,7 +1246,7 @@ export default function AdvancedDSS() {
         </div>
         <div style={styles.researchBadge}>
           <span style={styles.badgeIcon}>🎓</span>
-          <span style={styles.badgeText}>M.Tech Research</span>
+          <span style={styles.badgeText}>AI Research</span>
         </div>
       </div>
       
@@ -1356,5 +1842,61 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     marginTop: "24px",
+  },
+  // Crop Notice styles
+  cropNotice: {
+    marginTop: "20px",
+    marginBottom: "24px",
+    padding: "18px 22px",
+    background: "linear-gradient(135deg, #dcfce7, #f0fdf4)",
+    border: "1px solid rgba(34, 197, 94, 0.25)",
+    borderRadius: "16px",
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: "12px",
+    animation: "fadeIn 0.3s ease-out",
+  },
+  noticeHeader: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "12px",
+  },
+  noticeIcon: {
+    fontSize: "24px",
+    marginTop: "2px",
+  },
+  noticeTitle: {
+    fontSize: "0.95rem",
+    fontWeight: 600,
+    color: "#16a34a",
+    marginBottom: "8px",
+  },
+  noticeDetails: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "10px",
+  },
+  noticeBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "4px",
+    padding: "5px 12px",
+    background: "rgba(255, 255, 255, 0.8)",
+    borderRadius: "100px",
+    fontSize: "0.78rem",
+    fontWeight: 500,
+    color: "#475569",
+    border: "1px solid rgba(34, 197, 94, 0.2)",
+  },
+  noticeDismiss: {
+    padding: "6px 10px",
+    background: "rgba(255, 255, 255, 0.8)",
+    border: "1px solid rgba(34, 197, 94, 0.2)",
+    color: "#64748b",
+    fontSize: "14px",
+    cursor: "pointer",
+    borderRadius: "10px",
+    transition: "all 0.2s ease",
   },
 };

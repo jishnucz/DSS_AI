@@ -2,12 +2,88 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#16a34a" />
+    <meta name="description" content="AgriDSS Palakkad - AI-powered farming assistant for Kerala farmers. Voice support in Malayalam, Tamil, Hindi. Works offline!" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="AgriDSS" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <title>AgriDSS Palakkad - Smart Farming Assistant</title>
+    
+    <!-- Preload critical fonts for regional languages -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+      const isLocalDevHost = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', async () => {
+          // Never use SW cache in local development; clear old registrations/caches.
+          if (isLocalDevHost) {
+            try {
+              const registrations = await navigator.serviceWorker.getRegistrations();
+              await Promise.all(registrations.map((reg) => reg.unregister()));
+              if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                await Promise.all(cacheNames.map((name) => caches.delete(name)));
+              }
+              console.log('Local dev mode: cleared service workers and caches');
+            } catch (error) {
+              console.log('Local dev cache cleanup failed:', error);
+            }
+            return;
+          }
+
+          // Register Service Worker for production/offline support.
+          try {
+            const registration = await navigator.serviceWorker.register('/sw.js', {
+              scope: '/'
+            });
+            console.log('✅ AgriDSS Service Worker registered:', registration.scope);
+
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  if (confirm('New version of AgriDSS available! Reload to update?')) {
+                    window.location.reload();
+                  }
+                }
+              });
+            });
+          } catch (error) {
+            console.log('Service Worker registration failed:', error);
+          }
+        });
+      }
+      
+      // Handle offline/online events
+      window.addEventListener('online', () => {
+        document.body.classList.remove('offline');
+        console.log('🌐 Back online');
+      });
+      
+      window.addEventListener('offline', () => {
+        document.body.classList.add('offline');
+        console.log('📴 Gone offline');
+      });
+    </script>
   </body>
 </html>

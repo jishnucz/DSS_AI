@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#22c55e"/>
+      <stop offset="100%" style="stop-color:#16a34a"/>
+    </linearGradient>
+  </defs>
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="256" fill="url(#bg)"/>
+  <!-- Rice plant -->
+  <g fill="#ffffff">
+    <!-- Main stem -->
+    <path d="M256 450 C256 450 256 200 256 200" stroke="#fff" stroke-width="12" fill="none"/>
+    <!-- Left leaves -->
+    <ellipse cx="200" cy="240" rx="50" ry="15" transform="rotate(-30 200 240)"/>
+    <ellipse cx="180" cy="300" rx="60" ry="15" transform="rotate(-40 180 300)"/>
+    <ellipse cx="170" cy="360" rx="55" ry="12" transform="rotate(-35 170 360)"/>
+    <!-- Right leaves -->
+    <ellipse cx="312" cy="240" rx="50" ry="15" transform="rotate(30 312 240)"/>
+    <ellipse cx="332" cy="300" rx="60" ry="15" transform="rotate(40 332 300)"/>
+    <ellipse cx="342" cy="360" rx="55" ry="12" transform="rotate(35 342 360)"/>
+    <!-- Rice grains at top -->
+    <ellipse cx="256" cy="120" rx="12" ry="25"/>
+    <ellipse cx="230" cy="140" rx="10" ry="22" transform="rotate(-15 230 140)"/>
+    <ellipse cx="282" cy="140" rx="10" ry="22" transform="rotate(15 282 140)"/>
+    <ellipse cx="210" cy="165" rx="9" ry="20" transform="rotate(-25 210 165)"/>
+    <ellipse cx="302" cy="165" rx="9" ry="20" transform="rotate(25 302 165)"/>
+    <ellipse cx="240" cy="100" rx="8" ry="18" transform="rotate(-10 240 100)"/>
+    <ellipse cx="272" cy="100" rx="8" ry="18" transform="rotate(10 272 100)"/>
+  </g>
+  <!-- Sun rays -->
+  <g fill="#fde047" opacity="0.9">
+    <circle cx="420" cy="90" r="45"/>
+    <polygon points="420,30 425,55 440,35" />
+    <polygon points="475,70 455,82 480,95" />
+    <polygon points="480,120 455,115 470,140" />
+  </g>
+</svg>

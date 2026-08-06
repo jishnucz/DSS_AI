@@ -8,21 +8,96 @@ import colorsys
 
 logger = logging.getLogger(__name__)
 
-# Initialize BLIP model for crop detection
-processor = None
-blip_model = None
+# ──────────────────────────────────────────────────────────────────────
+# Models
+#   BLIP                  - generic image captioning (crop-type fallback)
+#   Plant-Disease ViT     - real fine-tuned classifier on PlantVillage
+#                           Classes: 13 (Corn/Potato/Rice/Wheat diseases
+#                           + Healthy + Invalid)
+# ──────────────────────────────────────────────────────────────────────
+
+# BLIP (crop-type identification)
+processor   = None
+blip_model  = None
+
+# Plant-disease classifier
+DISEASE_MODEL_ID = "wambugu71/crop_leaf_diseases_vit"
+disease_processor = None
+disease_model     = None
+
 
 def load_blip_model():
     global processor, blip_model
     try:
         logger.info("Loading BLIP model for crop classification...")
-        processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
+        processor  = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
         blip_model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
         logger.info("BLIP model loaded successfully")
         return True
     except Exception as e:
         logger.error(f"Error loading BLIP model: {str(e)}")
         return False
+
+
+def load_disease_model():
+    """Load the fine-tuned plant-disease ViT classifier."""
+    global disease_processor, disease_model
+    try:
+        from transformers import AutoImageProcessor, AutoModelForImageClassification
+        logger.info(f"Loading disease classifier: {DISEASE_MODEL_ID}")
+        disease_processor = AutoImageProcessor.from_pretrained(DISEASE_MODEL_ID)
+        disease_model     = AutoModelForImageClassification.from_pretrained(DISEASE_MODEL_ID)
+        disease_model.eval()
+        logger.info(f"Disease classifier loaded ({len(disease_model.config.id2label)} classes)")
+        return True
+    except Exception as e:
+        logger.error(f"Disease model load failed: {e}")
+        disease_processor = None
+        disease_model     = None
+        return False
+
+
+def _parse_disease_label(label: str) -> dict:
+    """PlantVillage-style labels: 'Rice___Leaf_Blast' -> crop, disease, healthy?"""
+    if "___" in label:
+        crop_raw, _, disease_raw = label.partition("___")
+        crop    = crop_raw.replace("_", " ").strip().title()
+        disease = disease_raw.replace("_", " ").strip()
+    else:
+        crop, disease = "Unknown", label
+    is_healthy = "healthy" in disease.lower()
+    is_invalid = label.strip().lower() == "invalid"
+    return {"crop": crop, "disease": disease,
+            "is_healthy": is_healthy, "is_invalid": is_invalid}
+
+
+def classify_disease(image) -> list | None:
+    """Return top-3 disease predictions, or None when model unavailable."""
+    if disease_model is None or disease_processor is None:
+        return None
+    try:
+        import torch
+        inputs = disease_processor(images=image, return_tensors="pt")
+        with torch.no_grad():
+            logits = disease_model(**inputs).logits
+        probs = torch.softmax(logits, dim=-1)[0]
+        top   = torch.topk(probs, k=min(3, probs.shape[0]))
+        out = []
+        for p, idx in zip(top.values.tolist(), top.indices.tolist()):
+            raw = disease_model.config.id2label[idx]
+            parsed = _parse_disease_label(raw)
+            out.append({
+                "label":       raw,
+                "crop":        parsed["crop"],
+                "disease":     parsed["disease"],
+                "is_healthy":  parsed["is_healthy"],
+                "is_invalid":  parsed["is_invalid"],
+                "confidence":  float(p),
+            })
+        return out
+    except Exception as e:
+        logger.error(f"Disease prediction failed: {e}")
+        return None
 
 
 def analyze_image_colors(image):
@@ -108,23 +183,26 @@ def detect_plant_health(color_analysis, caption):
     # Check for dark brown/rot colors (R > G > B pattern with low brightness)
     if avg_rgb[0] > avg_rgb[1] and avg_rgb[1] > avg_rgb[2]:  # Brown pattern
         brown_intensity = (avg_rgb[0] - avg_rgb[2]) / 255
-        if brown_intensity > 0.15 and brightness < 0.5:
-            health_score -= 35
+        if brown_intensity > 0.12 and brightness < 0.55:  # Lowered threshold
+            health_score -= 40
             issues.append("Dark brown coloration - likely rot or decay")
-        elif brown_intensity > 0.1 and brightness < 0.6:
-            health_score -= 20
-            issues.append("Brown discoloration detected")
+        elif brown_intensity > 0.08 and brightness < 0.65:  # Lowered threshold
+            health_score -= 25
+            issues.append("Brown discoloration detected - possible decay")
     
     # Check for mold colors (greenish-gray, fuzzy appearance indicators)
     gray_diff = max(avg_rgb) - min(avg_rgb)
-    if gray_diff < 30 and brightness < 0.4:
-        health_score -= 30
+    if gray_diff < 35 and brightness < 0.45:  # Lowered thresholds
+        health_score -= 35
         issues.append("Gray/moldy coloration - possible fungal infection")
     
     # Very dark images (rot, severe decay)
-    if brightness < 0.25:
-        health_score -= 40
+    if brightness < 0.3:
+        health_score -= 45
         issues.append("Very dark coloration - severe decay or rot")
+    elif brightness < 0.4 and brown_ratio > 1.8:
+        health_score -= 30
+        issues.append("Dark appearance with brown tones - likely rot or disease")
     
     # Check for very low green (likely diseased/rotten)
     if green_ratio < 0.25:
@@ -341,6 +419,48 @@ def classify_crop_from_image(image_file):
         if health_info["issues"]:
             disease_recommendations = get_disease_recommendations(detected_crop, health_info["issues"])
 
+        # Real disease classifier (PlantVillage ViT)
+        disease_preds = classify_disease(image)
+        disease_info  = None
+        if disease_preds:
+            top = disease_preds[0]
+            if top["is_invalid"]:
+                disease_info = {
+                    "model":       DISEASE_MODEL_ID,
+                    "verdict":     "Image is not a clear plant leaf",
+                    "confidence":  round(top["confidence"] * 100, 1),
+                    "top_predictions": disease_preds,
+                }
+            else:
+                # Prefer the disease model's crop name when it's confident
+                if top["confidence"] >= 0.50:
+                    detected_crop = top["crop"].lower()
+                    confidence_score = round(top["confidence"] * 100, 1)
+                disease_info = {
+                    "model":      DISEASE_MODEL_ID,
+                    "crop":       top["crop"],
+                    "disease":    "None (Healthy)" if top["is_healthy"] else top["disease"],
+                    "is_healthy": top["is_healthy"],
+                    "confidence": round(top["confidence"] * 100, 1),
+                    "top_predictions": disease_preds,
+                }
+                # Surface the disease model's verdict through the legacy
+                # health_info block so the existing frontend logic also reacts.
+                if not top["is_healthy"]:
+                    if not health_info.get("issues"):
+                        health_info["issues"] = []
+                    health_info["issues"].append(top["disease"])
+                    health_info["status"] = "diseased"
+                    # Score: high-conf disease => low score; low-conf => moderate
+                    health_info["score"] = int(max(15, 70 - top["confidence"] * 60))
+                else:
+                    # Disease model is confident the crop is healthy — clear out
+                    # any BLIP-caption keyword false positives.
+                    if top["confidence"] >= 0.60:
+                        health_info["status"] = "healthy"
+                        health_info["issues"] = []
+                        health_info["score"] = int(85 + top["confidence"] * 10)
+
         result = {
             "success": True,
             "crop": detected_crop.capitalize() if detected_crop else "Unknown",
@@ -353,6 +473,7 @@ def classify_crop_from_image(image_file):
             "color_analysis": color_analysis,
             "recommendations": get_crop_recommendations(detected_crop) if detected_crop else [],
             "disease_recommendations": disease_recommendations,
+            "disease": disease_info,
             "matched_keywords": list(set(matched_keywords))[:5]
         }
 
@@ -510,3 +631,4 @@ def get_crop_recommendations(crop):
 # Initialize on startup
 def initialize():
     load_blip_model()
+    load_disease_model()
