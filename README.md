@@ -1,188 +1,91 @@
-# Palakkad Agriculture Decision Support System (DSS)
-## with AI-Powered Crop Classification
+# Palakkad Agricultural Decision Support System
 
-> **Integrated Solution for Climate-Smart Agriculture**
+Palakkad DSS is a web application for crop advisory and crop image classification. It combines a FastAPI backend, a React frontend, local machine-learning models, and district-level agricultural data to support agricultural decision-making.
 
-![Status](https://img.shields.io/badge/Status-Ready%20for%20Deployment-green)
-![Python](https://img.shields.io/badge/Python-3.12%2B-blue)
-![React](https://img.shields.io/badge/React-19.2.0-blue)
-![FastAPI](https://img.shields.io/badge/FastAPI-Latest-green)
+## Overview
 
-## 🌾 Overview
+The application provides:
 
-Palakkad DSS is an intelligent agricultural decision support system that combines real-time weather analysis, AI-powered crop identification, and personalized farmer recommendations. Powered by machine learning models (LSTM for climate prediction, BLIP for crop classification) and open-source APIs.
+- Climate stress assessment for a selected location, crop, and date range
+- Crop image classification with model-based recommendations
+- Weather-aware advisory logic
+- A browser-based dashboard for daily use
+- Local model inference with external weather data from Open-Meteo
 
-### Key Features
+## Repository Structure
 
-✅ **Real-Time Climate Stress Prediction** - LSTM neural network analyzes weather patterns
-✅ **Growth Stage Calculation** - Automatic crop development stage detection
-✅ **AI-Powered Crop Classification** - BLIP model identifies crops from images
-✅ **Personalized Advisories** - Context-aware recommendations for farmers
-✅ **3-Day Forecast** - Weather predictions for better planning
-✅ **Multi-Crop Support** - 10+ crop types with specific guidance
-✅ **Responsive UI** - Works on desktop, tablet, and mobile
-✅ **Zero Configuration** - Ready to use out of the box
+- `backend/` - FastAPI application, DSS logic, classifiers, templates, and model assets
+- `frontend/` - React application built with Vite
+- `data/` - CSV datasets used by the backend and supporting analysis
+- `research_analysis/` - Research notebooks, scripts, and intermediate analysis artifacts
+- `requirements.txt` - Python dependencies for the backend
+- `frontend/package.json` - Frontend dependencies and scripts
+- `QUICK_START.md` - Short setup guide
 
-## 🚀 Quick Start
+## Requirements
 
-### Prerequisites
-- Python 3.12+ 
+- Python 3.12 or later
+- Node.js 18 or later
+- Git
+- A Python virtual environment is recommended
+
+## Setup
+
+### Backend dependencies
+
+From the repository root:
 
 ```bash
-# 1. Install Python dependencies
+python -m pip install -r requirements.txt
+```
+
+### Frontend dependencies
+
+```bash
+cd frontend
 npm install
 ```
 
+## Running the application
+
+Run the backend and frontend in separate terminals.
+
+### Backend
+
+Start the backend from the `backend` directory so the relative model paths resolve correctly.
+
+```bash
 cd backend
 python -m uvicorn app:app --reload --port 8000
 ```
 
-**Terminal 2: Frontend**
+### Frontend
+
 ```bash
 cd frontend
 npm run dev
 ```
 
-**Open:** http://localhost:5174
+The frontend usually runs at `http://localhost:5174`.
 
-## 📊 System Capabilities
+## Important runtime assets
 
-### 1. DSS Analysis
-Input location, crop, and dates → Get climate stress assessment and farming advice
+The backend expects trained model files in these locations:
+
+- `backend/model/`
+- `backend/models/`
+
+Do not rename or move these directories unless the model-loading code is updated as well.
+
+## Main API Endpoints
+
+### Climate and DSS analysis
+
+`POST /dss`
+
+Example payload:
 
 ```json
-{
-  "climate_stress": 45,
-  "growth_stage": "Vegetative",
-  "crop_risk": "Moderate",
-  "advisory": "Monitor for pest activity during this stage"
-}
-```
-
-### 2. Crop Classification
-Upload crop photo → AI identifies crop type and provides care recommendations
-
-```json
-{
-  "crop": "rice",
-  "confidence": 85,
-  "caption": "rice paddy field with green plants",
-  "recommendations": [
-    "Maintain water level at 5-10cm",
-    "Apply nitrogen fertilizer at 4-6 weeks",
-    "Monitor for stem borer"
-  ]
-}
-```
-
-### 3. Growth Stage Tracking
-- **Panicle Formation** (40-70 days)
-- **Flowering** (70-100 days)
-- **Maturity** (100+ days)
-
-## 🏗️ Architecture
-
-```
-┌─────────────────┐
-│  React Frontend │ (http://localhost:5174)
-│   Dashboard UI  │
-└────────┬────────┘
-         │ HTTP/REST
-┌────────▼────────┐
-│  FastAPI Server │ (http://127.0.0.1:8000)
-├─────────────────┤
-│  • DSS Engine   │
-│  • Crop Classifier
-│  • LSTM Model   │
-│  • BLIP Model   │
-└────────┬────────┘
-         │
-    ┌────┴────┐
-    │          │
-    ▼          ▼
-Open-Meteo  Hugging Face
-(Weather)   (Models)
-```
-
-palakkad_dss/
-├── backend/
-│   ├── app.py                      # FastAPI server
-│   ├── dss_engine.py               # DSS analysis logic
-│   ├── crop_classifier.py          # Crop classification (NEW)
-│       └── scaler.save             # Data normalization
-│
-├── frontend/
-│       │   ├── DSSInput.jsx        # Form
-│       │   ├── DSSOutput.jsx       # Results
-│       │   ├── ForecastTable.jsx   # Forecast
-│
-├── Documentation (see below)
-└── README.md (this file)
-```
-
-## 📚 Documentation
-
-Start with these guides in order:
-
-1. **[QUICK_START.md](./QUICK_START.md)** - Installation & basic usage
-2. **[INTEGRATION_GUIDE.md](./INTEGRATION_GUIDE.md)** - Complete system guide
-3. **[SYSTEM_ARCHITECTURE.md](./SYSTEM_ARCHITECTURE.md)** - Technical details
-4. **[CROP_CLASSIFICATION_INTEGRATION.md](./CROP_CLASSIFICATION_INTEGRATION.md)** - ML integration
-5. **[DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md)** - Pre-deployment verification
-
-## 🔧 Technology Stack
-
-### Backend
-- **FastAPI** - Modern, fast web framework
-- **Uvicorn** - ASGI server
-- **TensorFlow/Keras** - LSTM model loading
-- **Transformers** - BLIP model from Hugging Face
-- **Scikit-learn** - Data preprocessing
-
-### Frontend
-- **React 19.2.0** - UI framework
-- **Vite 7.3.1** - Build tool
-- **Axios** - HTTP client
-- **CSS3** - Styling with variables
-
-### External APIs
-- **Open-Meteo** - Free weather data (no auth needed)
-- **Hugging Face** - BLIP model hosting
-
-## 🌾 Supported Crops
-
-Classification available for:
-- Rice, Wheat, Maize, Tomato, Potato, Onion, Coconut, Soybean, Sugarcane, Cotton
-
-Easy to add more!
-
-## 🎯 Use Cases
-
-### For Individual Farmers
-- Check crop health daily
-- Get weather alerts
-- Learn best practices
-- Plan irrigation and fertilization
-
-### For Agricultural Extension
-- Train farmers on DSS usage
-- Monitor regional crop status
-- Provide data-driven advisories
-- Track seasonal performance
-
-### For Agribusiness
-- Optimize supply chain
-- Plan procurement
-- Predict yields
-- Support farmer networks
-
-## ⚙️ API Reference
-
-### DSS Analysis
-```bash
-POST /dss
-Content-Type: application/json
-
 {
   "location": "Palakkad",
   "crop": "rice",
@@ -191,159 +94,41 @@ Content-Type: application/json
 }
 ```
 
-### Crop Classification
-```bash
-POST /classify-crop
-Content-Type: multipart/form-data
+### Crop classification
 
-file: <image.jpg>
-```
+`POST /classify-crop`
 
-## 🐛 Troubleshooting
+Send a multipart form request with an image file field named `file`.
 
-### Backend won't start
-```bash
-# Check port 8000 is free
-netstat -ano | findstr :8000
-# Kill process if needed, then restart
-```
+## Development Notes
 
-### Frontend can't connect
-```bash
-# Verify backend URL in component
-# Should be: http://127.0.0.1:8000 (not localhost)
-```
+- The backend loads local model assets at startup.
+- Some first-run warnings from TensorFlow or external model checks may appear during initialization.
+- The frontend is intended to be run as a browser application during development.
 
-### Image classification is slow
-```bash
-# First run downloads BLIP model (~1GB)
-# This takes 5-10 minutes - only happens once
-# Subsequent classifications are instant
-```
+## Troubleshooting
 
-See [QUICK_START.md](./QUICK_START.md) for more troubleshooting.
+If the backend does not start:
 
-## 📈 Performance
+- Run it from the `backend` directory.
+- Confirm that the model files exist in `backend/model/` and `backend/models/`.
+- Check that port `8000` is available.
 
-| Operation | Time | Note |
-|-----------|------|------|
-| DSS Analysis | 2-3 sec | Includes weather API |
-| Model Download | 5-10 min | First time only |
-| Crop Classification | 3-5 sec | After model cached |
+If the frontend does not load:
 
-## 🔒 Security
+- Confirm that the backend is running.
+- Verify the frontend is pointing to the correct backend URL.
+- Reinstall frontend dependencies with `npm install` if needed.
 
-- ✅ File upload validation
-- ✅ No code execution risk
-- ✅ CORS properly configured
-- ✅ Input validation on all endpoints
-- ✅ Models from official sources
+If model loading fails:
 
-## 📝 License
+- Check that `lstm_model.h5`, `lstm_model.keras`, and the files under `backend/models/` are present.
+- Make sure the working directory is correct before starting the backend.
 
-Developed for Palakkad Agricultural Division.
+## Project Notes
 
-## 👥 Contributing
+The repository has been trimmed to keep application source, runtime assets, and essential datasets while removing generated reports, thesis artifacts, and helper scripts.
 
-To extend the system:
+## License
 
-1. Add new crops to `crop_classifier.py`
-2. Enhance DSS logic in `dss_engine.py`
-3. Add new UI components in `frontend/src/components/`
-4. Test and document changes
-
-## 🤝 Support
-
-### For Users
-- Check documentation first
-- Review QUICK_START.md
-- Check browser console (F12)
-- Review backend logs
-
-### For Developers
-- Run `backend/test_classifier.py`
-- Check import errors
-- Verify model files exist
-- Monitor network requests
-
-## 🚀 Deployment
-
-Ready to deploy to:
-- **Local Server** - Use QUICK_START.md
-- **Docker** - Container-ready
-- **Cloud** - AWS, Azure, GCP compatible
-- **Mobile** - React Native wrapper available
-
-## 📊 Data Sources
-
-- **Weather Data** - Open-Meteo API (free, no auth)
-- **ML Models** - Hugging Face Hub (cached locally)
-- **Crop Data** - Local database (extensible)
-
-## 🔄 Updates & Roadmap
-
-### Current (v1.0)
-- ✅ DSS analysis
-- ✅ Crop classification
-- ✅ Web interface
-
-### Planned (v2.0)
-- 📱 Mobile app
-- 📊 Analytics dashboard
-- 💬 SMS alerts
-- 🌍 Multi-language support
-
-## ❓ FAQ
-
-**Q: Do I need internet?**
-A: Yes, for Open-Meteo weather API. Models can be cached locally.
-
-**Q: Can I add my own crops?**
-A: Yes! Update crop_classifier.py with new crop recommendations.
-
-**Q: Is the data private?**
-A: Yes, all processing is local. No data sent to cloud services except weather API.
-
-**Q: What if classification is wrong?**
-A: Try a clearer image with the full plant. Provide feedback to improve future versions.
-
-**Q: Can I use on mobile?**
-A: Yes, the web UI is fully responsive. Native app in development.
-
-## 📞 Contact
-
-For issues, questions, or feature requests:
-1. Check documentation files
-2. Review error logs
-3. Run test scripts
-4. Check system requirements
-
-## 🎉 Getting Started
-
-Ready to use? Follow these 3 steps:
-
-1. **Install**
-   ```bash
-   pip install -r requirements.txt
-   npm install
-   ```
-
-2. **Run**
-   ```bash
-   python backend/app.py &
-   npm run dev
-   ```
-
-3. **Use**
-   ```
-   Open http://localhost:5174
-   ```
-
-**That's it!** You're ready to help farmers make better decisions. 🌾
-
----
-
-**Made with 🤍 for sustainable agriculture**
-
-Last Updated: December 21, 2024
-Status: ✅ Production Ready
+This project was developed for the Palakkad agricultural decision-support use case. Review dataset and model licensing before publishing it publicly.
