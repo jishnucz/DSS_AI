@@ -27,26 +27,12 @@ Palakkad DSS is an intelligent agricultural decision support system that combine
 
 ### Prerequisites
 - Python 3.12+ 
-- Node.js 18+
-- 2GB disk space
-- 4GB RAM
-
-### Installation (2 minutes)
 
 ```bash
 # 1. Install Python dependencies
-cd backend
-pip install fastapi uvicorn tensorflow scikit-learn numpy requests transformers torch pillow
-
-# 2. Install Node dependencies
-cd ../frontend
 npm install
 ```
 
-### Running (2 commands, 2 terminals)
-
-**Terminal 1: Backend**
-```bash
 cd backend
 python -m uvicorn app:app --reload --port 8000
 ```
@@ -90,8 +76,6 @@ Upload crop photo → AI identifies crop type and provides care recommendations
 ```
 
 ### 3. Growth Stage Tracking
-- **Germination** (0-20 days)
-- **Vegetative** (20-40 days)
 - **Panicle Formation** (40-70 days)
 - **Flowering** (70-100 days)
 - **Maturity** (100+ days)
@@ -120,28 +104,17 @@ Open-Meteo  Hugging Face
 (Weather)   (Models)
 ```
 
-## 📁 Project Structure
-
-```
 palakkad_dss/
 ├── backend/
 │   ├── app.py                      # FastAPI server
 │   ├── dss_engine.py               # DSS analysis logic
 │   ├── crop_classifier.py          # Crop classification (NEW)
-│   ├── test_classifier.py          # Testing script
-│   └── model/
-│       ├── lstm_model.h5           # Neural network
 │       └── scaler.save             # Data normalization
 │
 ├── frontend/
-│   └── src/
-│       ├── pages/Dashboard.jsx     # Main page
-│       ├── components/
 │       │   ├── DSSInput.jsx        # Form
 │       │   ├── DSSOutput.jsx       # Results
 │       │   ├── ForecastTable.jsx   # Forecast
-│       │   └── CropClassification.jsx  # NEW
-│       └── styles/
 │
 ├── Documentation (see below)
 └── README.md (this file)

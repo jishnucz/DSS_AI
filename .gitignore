@@ -51,9 +51,12 @@ secrets.json
 Final_Report/
 paper_assets/
 research_analysis/reports/
+research_analysis/notebooks/
+research_analysis/figures/
 research_analysis/data/ERA5/
 research_analysis/data/extended/
 research_analysis/data/external_india/
+research_analysis/data/india_data_registry.csv
 research_analysis/figures/mtech_nb/
 research_analysis/figures/mtech_notebook/
 research_analysis/figures/production/
